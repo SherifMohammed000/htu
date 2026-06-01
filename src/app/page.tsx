@@ -4,7 +4,6 @@ import { useEffect, useState, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { LogIn, Eye, EyeOff, UserPlus, ArrowRight, ShieldCheck, Download } from "lucide-react";
-import Image from "next/image";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
 
@@ -28,13 +27,11 @@ export default function Home() {
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  const [isInstallable, setIsInstallable] = useState(false);
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e);
-      setIsInstallable(true);
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -45,13 +42,15 @@ export default function Home() {
   }, []);
 
   const handleInstallClick = async () => {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === 'accepted') {
-      setIsInstallable(false);
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        setDeferredPrompt(null);
+      }
+    } else {
+      alert("To install this app, tap the Share icon (iOS) or Menu icon (Android) and select 'Add to Home Screen'. On desktop, look for the install icon in your browser's address bar.");
     }
-    setDeferredPrompt(null);
   };
 
   useEffect(() => {
@@ -221,7 +220,7 @@ export default function Home() {
       <div className="hidden lg:flex lg:w-1/2 flex-col items-center justify-center p-12 text-white relative z-10">
         <div className="text-center">
           <div className="w-32 h-32 bg-white rounded-full flex items-center justify-center mx-auto mb-8 shadow-2xl overflow-hidden p-2">
-            <Image src="/htu-logo.png" alt="HTU Logo" width={128} height={128} className="object-contain" />
+            <img src="https://htu.edu.gh/wp-content/uploads/2021/08/HTU-Logo.png" alt="HTU Logo" className="w-28 h-28 object-contain" />
           </div>
           <h1 className="text-5xl font-extrabold mb-4 tracking-tight drop-shadow-md">HTU Attendance</h1>
           <p className="text-blue-100 text-xl mb-12 max-w-sm mx-auto leading-relaxed font-medium">
@@ -241,16 +240,14 @@ export default function Home() {
             ))}
           </div>
           
-          {isInstallable && (
-            <div className="mt-10 max-w-sm mx-auto">
-              <button 
-                onClick={handleInstallClick} 
-                className="w-full py-4 px-6 bg-white/20 hover:bg-white/30 text-white border-2 border-white/40 rounded-2xl font-bold flex items-center justify-center gap-3 transition-all backdrop-blur-md shadow-[0_4px_14px_0_rgba(255,255,255,0.15)] hover:scale-105 active:scale-95"
-              >
-                <Download className="w-6 h-6" /> Install Desktop App
-              </button>
-            </div>
-          )}
+          <div className="mt-10 max-w-sm mx-auto">
+            <button 
+              onClick={handleInstallClick} 
+              className="w-full py-4 px-6 bg-white/20 hover:bg-white/30 text-white border-2 border-white/40 rounded-2xl font-bold flex items-center justify-center gap-3 transition-all backdrop-blur-md shadow-[0_4px_14px_0_rgba(255,255,255,0.15)] hover:scale-105 active:scale-95"
+            >
+              <Download className="w-6 h-6" /> Install Desktop App
+            </button>
+          </div>
         </div>
       </div>
 
@@ -258,20 +255,18 @@ export default function Home() {
         <div className="w-full max-w-md mx-auto bg-white/10 backdrop-blur-xl rounded-[2.5rem] shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] p-8 sm:p-10 border border-white/20 text-white">
           <div className="lg:hidden flex flex-col items-center justify-center gap-4 mb-8">
             <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-xl overflow-hidden p-2 border-2 border-white/50">
-              <Image src="/htu-logo.png" alt="HTU Logo" width={96} height={96} className="object-contain" />
+              <img src="https://htu.edu.gh/wp-content/uploads/2021/08/HTU-Logo.png" alt="HTU Logo" className="w-20 h-20 object-contain" />
             </div>
             <div className="text-center">
               <h1 className="text-3xl font-extrabold tracking-tight drop-shadow-md">HTU Attendance</h1>
               <p className="text-sm text-blue-100 font-medium mt-1">Smart tracking portal</p>
             </div>
-            {isInstallable && (
-              <button 
-                onClick={handleInstallClick} 
-                className="mt-2 px-6 py-3 w-full bg-white/20 hover:bg-white/30 text-white border-2 border-white/40 rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg text-sm hover:scale-105 active:scale-95"
-              >
-                <Download className="w-5 h-5" /> Install Mobile App
-              </button>
-            )}
+            <button 
+              onClick={handleInstallClick} 
+              className="mt-2 px-6 py-3 w-full bg-white/20 hover:bg-white/30 text-white border-2 border-white/40 rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg text-sm hover:scale-105 active:scale-95"
+            >
+              <Download className="w-5 h-5" /> Install Mobile App
+            </button>
           </div>
 
           {/* LOGIN MODE */}
