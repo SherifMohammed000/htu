@@ -3,7 +3,8 @@
 import { useEffect, useState, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
-import { QrCode, LogIn, Eye, EyeOff, UserPlus, ArrowRight, ShieldCheck } from "lucide-react";
+import { LogIn, Eye, EyeOff, UserPlus, ArrowRight, ShieldCheck } from "lucide-react";
+import Image from "next/image";
 import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
 
@@ -198,8 +199,8 @@ export default function Home() {
           <div className="absolute bottom-10 right-10 w-96 h-96 rounded-full bg-white" />
         </div>
         <div className="relative z-10 text-center">
-          <div className="w-24 h-24 bg-white/20 backdrop-blur-sm rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-2xl">
-            <QrCode className="h-12 w-12 text-white" />
+          <div className="w-32 h-32 bg-white rounded-full flex items-center justify-center mx-auto mb-8 shadow-2xl overflow-hidden p-2">
+            <Image src="/htu-logo.png" alt="HTU Logo" width={128} height={128} className="object-contain" />
           </div>
           <h1 className="text-4xl font-extrabold mb-4 tracking-tight">HTU Attendance</h1>
           <p className="text-blue-100 text-xl mb-12 max-w-sm mx-auto leading-relaxed">
@@ -224,8 +225,8 @@ export default function Home() {
       <div className="flex flex-1 flex-col justify-center py-12 px-6 sm:px-12 lg:px-16">
         <div className="w-full max-w-md mx-auto">
           <div className="lg:hidden flex items-center justify-center gap-3 mb-10">
-            <div className="w-12 h-12 bg-blue-700 rounded-2xl flex items-center justify-center shadow-lg">
-              <QrCode className="h-6 w-6 text-white" />
+            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-lg overflow-hidden p-1">
+              <Image src="/htu-logo.png" alt="HTU Logo" width={64} height={64} className="object-contain" />
             </div>
             <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white">HTU Attendance</h1>
           </div>
