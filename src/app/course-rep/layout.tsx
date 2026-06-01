@@ -41,7 +41,7 @@ export default function CourseRepLayout({
       <div className="md:hidden bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-4 py-3 flex justify-between items-center sticky top-0 z-30">
         <div className="flex items-center gap-2">
           <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center shadow-sm overflow-hidden p-0.5">
-            <img src="https://htu.edu.gh/wp-content/uploads/2021/08/HTU-Logo.png" alt="HTU" className="w-8 h-8 object-contain" />
+            <img src="/htu-logo.png" alt="HTU" className="w-8 h-8 object-contain" />
           </div>
           <span className="font-bold text-slate-900 dark:text-white tracking-tight">HTU Attendance</span>
         </div>
@@ -55,7 +55,7 @@ export default function CourseRepLayout({
         <div className="h-full flex flex-col">
           <div className="p-6 hidden md:flex items-center gap-3">
             <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg overflow-hidden p-1">
-              <img src="https://htu.edu.gh/wp-content/uploads/2021/08/HTU-Logo.png" alt="HTU" className="w-10 h-10 object-contain" />
+              <img src="/htu-logo.png" alt="HTU" className="w-10 h-10 object-contain" />
             </div>
             <div>
               <h1 className="font-extrabold text-slate-900 dark:text-white leading-tight">HTU</h1>

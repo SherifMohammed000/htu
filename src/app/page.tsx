@@ -220,7 +220,7 @@ export default function Home() {
       <div className="hidden lg:flex lg:w-1/2 flex-col items-center justify-center p-12 text-white relative z-10">
         <div className="text-center">
           <div className="w-32 h-32 bg-white rounded-full flex items-center justify-center mx-auto mb-8 shadow-2xl overflow-hidden p-2">
-            <img src="https://htu.edu.gh/wp-content/uploads/2021/08/HTU-Logo.png" alt="HTU Logo" className="w-28 h-28 object-contain" />
+            <img src="/htu-logo.png" alt="HTU Logo" className="w-28 h-28 object-contain" />
           </div>
           <h1 className="text-5xl font-extrabold mb-4 tracking-tight drop-shadow-md">HTU Attendance</h1>
           <p className="text-blue-100 text-xl mb-12 max-w-sm mx-auto leading-relaxed font-medium">
@@ -255,7 +255,7 @@ export default function Home() {
         <div className="w-full max-w-md mx-auto bg-white/10 backdrop-blur-xl rounded-[2.5rem] shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] p-8 sm:p-10 border border-white/20 text-white">
           <div className="lg:hidden flex flex-col items-center justify-center gap-4 mb-8">
             <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-xl overflow-hidden p-2 border-2 border-white/50">
-              <img src="https://htu.edu.gh/wp-content/uploads/2021/08/HTU-Logo.png" alt="HTU Logo" className="w-20 h-20 object-contain" />
+              <img src="/htu-logo.png" alt="HTU Logo" className="w-20 h-20 object-contain" />
             </div>
             <div className="text-center">
               <h1 className="text-3xl font-extrabold tracking-tight drop-shadow-md">HTU Attendance</h1>
