@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
-import { LogIn, Eye, EyeOff, UserPlus, ArrowRight, ShieldCheck } from "lucide-react";
+import { LogIn, Eye, EyeOff, UserPlus, ArrowRight, ShieldCheck, Download } from "lucide-react";
 import Image from "next/image";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
@@ -26,6 +26,33 @@ export default function Home() {
   const [allStudents, setAllStudents] = useState<any[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
+
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [isInstallable, setIsInstallable] = useState(false);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setIsInstallable(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setIsInstallable(false);
+    }
+    setDeferredPrompt(null);
+  };
 
   useEffect(() => {
     if (!isLoading && user) {
@@ -213,6 +240,17 @@ export default function Home() {
               </div>
             ))}
           </div>
+          
+          {isInstallable && (
+            <div className="mt-10 max-w-sm mx-auto">
+              <button 
+                onClick={handleInstallClick} 
+                className="w-full py-4 px-6 bg-white/20 hover:bg-white/30 text-white border-2 border-white/40 rounded-2xl font-bold flex items-center justify-center gap-3 transition-all backdrop-blur-md shadow-[0_4px_14px_0_rgba(255,255,255,0.15)] hover:scale-105 active:scale-95"
+              >
+                <Download className="w-6 h-6" /> Install Desktop App
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -226,6 +264,14 @@ export default function Home() {
               <h1 className="text-3xl font-extrabold tracking-tight drop-shadow-md">HTU Attendance</h1>
               <p className="text-sm text-blue-100 font-medium mt-1">Smart tracking portal</p>
             </div>
+            {isInstallable && (
+              <button 
+                onClick={handleInstallClick} 
+                className="mt-2 px-6 py-3 w-full bg-white/20 hover:bg-white/30 text-white border-2 border-white/40 rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg text-sm hover:scale-105 active:scale-95"
+              >
+                <Download className="w-5 h-5" /> Install Mobile App
+              </button>
+            )}
           </div>
 
           {/* LOGIN MODE */}
