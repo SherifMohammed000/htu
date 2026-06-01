@@ -30,6 +30,7 @@ export default function Home() {
     if (!isLoading && user) {
       if (user.role === "lecturer") router.push("/lecturer/dashboard");
       else if (user.role === "student") router.push("/student/dashboard");
+      else if (user.role === "course_rep") router.push("/course-rep/dashboard");
       else if (user.role === "admin") router.push("/admin/dashboard");
     }
   }, [user, isLoading, router]);
