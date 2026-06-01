@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { QrCode, LogIn, Eye, EyeOff, UserPlus, ArrowRight, ShieldCheck } from "lucide-react";
@@ -22,6 +22,10 @@ export default function Home() {
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const [allStudents, setAllStudents] = useState<any[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     if (!isLoading && user) {
       if (user.role === "lecturer") router.push("/lecturer/dashboard");
@@ -29,6 +33,33 @@ export default function Home() {
       else if (user.role === "admin") router.push("/admin/dashboard");
     }
   }, [user, isLoading, router]);
+
+  useEffect(() => {
+    if (mode === "activate-step-1") {
+      const fetchStudents = async () => {
+        try {
+          const querySnapshot = await getDocs(collection(db, "students"));
+          const studentsData = querySnapshot.docs.map(doc => doc.data());
+          setAllStudents(studentsData);
+        } catch (e) {
+          console.error("Failed to fetch students for autocomplete", e);
+        }
+      };
+      fetchStudents();
+    }
+  }, [mode]);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [wrapperRef]);
 
   const fetchIpAddress = async () => {
     try {
@@ -67,24 +98,27 @@ export default function Home() {
     setIsSubmitting(true);
     
     try {
-      // 1. Check if student exists in 'students' collection
-      const studentRef = doc(db, 'students', identifier);
-      const studentSnap = await getDoc(studentRef);
-      
-      if (!studentSnap.exists()) {
+      // Check local list first if loaded
+      const matched = allStudents.find(s => s.indexNumber === identifier);
+      if (!matched) {
         setError("No student found with this Index Number.");
         setIsSubmitting(false);
         return;
       }
       
-      const studentData = studentSnap.data();
-      if (studentData.name.trim().toLowerCase() !== fullName.trim().toLowerCase()) {
+      const actualLower = matched.name.toLowerCase();
+      const typedParts = fullName.trim().toLowerCase().split(/\s+/);
+      const isNameMatch = typedParts.every((part: string) => actualLower.includes(part));
+
+      if (!isNameMatch) {
         setError("The Full Name does not match our records for this Index Number.");
         setIsSubmitting(false);
         return;
       }
+
+      // If user typed orderless name, we normalize it to the official DB name for the next steps
+      setFullName(matched.name);
       
-      // 2. Proceed to step 2
       setMode("activate-step-2");
     } catch (err) {
       console.error(err);
@@ -110,10 +144,8 @@ export default function Home() {
 
     setIsSubmitting(true);
     try {
-      // 1. Fetch IP
       const ip = await fetchIpAddress();
       
-      // 2. Check if IP already used by another user
       const usersRef = collection(db, 'users');
       const q = query(usersRef, where("ipAddress", "==", ip));
       const querySnapshot = await getDocs(q);
@@ -124,10 +156,7 @@ export default function Home() {
         return;
       }
       
-      // 3. Register the student
       await registerStudent(identifier, fullName, password, ip);
-      
-      // They will be automatically logged in and redirected
     } catch (err: any) {
       console.error(err);
       if (err.code === "auth/email-already-in-use") {
@@ -140,6 +169,17 @@ export default function Home() {
     }
   };
 
+  // Helper for orderless matching in autocomplete
+  const filteredStudents = allStudents.filter(s => {
+    if (!fullName.trim()) return false;
+    // Don't show dropdown if they already typed the exact full name (from autofill)
+    if (fullName.trim().toLowerCase() === s.name.toLowerCase()) return false;
+    
+    const typedParts = fullName.trim().toLowerCase().split(/\s+/);
+    const actualLower = s.name.toLowerCase();
+    return typedParts.every((part: string) => actualLower.includes(part));
+  });
+
   if (isLoading || user) {
     return (
       <div className="flex items-center justify-center min-h-screen flex-col gap-4">
@@ -151,7 +191,6 @@ export default function Home() {
 
   return (
     <div className="flex min-h-screen bg-white dark:bg-slate-900">
-      {/* Left decorative panel - hidden on mobile */}
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-700 via-blue-600 to-red-600 flex-col items-center justify-center p-12 text-white relative overflow-hidden">
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-10 left-10 w-64 h-64 rounded-full bg-white" />
@@ -181,7 +220,6 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Right form panel */}
       <div className="flex flex-1 flex-col justify-center py-12 px-6 sm:px-12 lg:px-16">
         <div className="w-full max-w-md mx-auto">
           <div className="lg:hidden flex items-center justify-center gap-3 mb-10">
@@ -277,6 +315,7 @@ export default function Home() {
                         setError("");
                         setIdentifier("");
                         setPassword("");
+                        setFullName("");
                       }}
                       className="text-red-600 hover:text-red-700 font-semibold transition-colors"
                     >
@@ -311,26 +350,60 @@ export default function Home() {
                     type="text"
                     required
                     value={identifier}
-                    onChange={(e) => setIdentifier(e.target.value)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setIdentifier(val);
+                      // Auto-fill name if index number matches
+                      const match = allStudents.find(s => s.indexNumber === val);
+                      if (match) {
+                        setFullName(match.name);
+                        setShowSuggestions(false);
+                      }
+                    }}
                     className="block w-full rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-3 text-slate-900 dark:text-white dark:bg-slate-800 placeholder-slate-400 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-500/20 transition-all"
                     placeholder="e.g. 0324080252"
                   />
                 </div>
 
-                <div>
+                <div ref={wrapperRef} className="relative">
                   <label htmlFor="fullName" className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                    Full Name (As in database)
+                    Full Name
                   </label>
                   <input
                     id="fullName"
                     name="fullName"
                     type="text"
                     required
+                    autoComplete="off"
                     value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
+                    onChange={(e) => {
+                      setFullName(e.target.value);
+                      setShowSuggestions(true);
+                    }}
+                    onFocus={() => setShowSuggestions(true)}
                     className="block w-full rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-3 text-slate-900 dark:text-white dark:bg-slate-800 placeholder-slate-400 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-500/20 transition-all"
-                    placeholder="e.g. ADDAE BISMARK KOFI"
+                    placeholder="e.g. KOFI BISMARK ADDAE"
                   />
+                  
+                  {/* Autocomplete dropdown */}
+                  {showSuggestions && filteredStudents.length > 0 && (
+                    <ul className="absolute z-10 w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl mt-1 max-h-48 overflow-y-auto shadow-xl">
+                      {filteredStudents.map((s, idx) => (
+                        <li 
+                          key={s.indexNumber}
+                          className={`px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer text-sm text-slate-700 dark:text-slate-300 ${idx !== filteredStudents.length - 1 ? 'border-b border-slate-100 dark:border-slate-700/50' : ''}`}
+                          onClick={() => {
+                            setFullName(s.name);
+                            setIdentifier(s.indexNumber);
+                            setShowSuggestions(false);
+                          }}
+                        >
+                          <div className="font-semibold">{s.name}</div>
+                          <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{s.indexNumber}</div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
 
                 {error && (
