@@ -222,13 +222,22 @@ export default function Home() {
         </div>
       </div>
 
-      <div className="flex flex-1 flex-col justify-center py-12 px-6 sm:px-12 lg:px-16">
-        <div className="w-full max-w-md mx-auto">
-          <div className="lg:hidden flex items-center justify-center gap-3 mb-10">
-            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-lg overflow-hidden p-1">
-              <Image src="/htu-logo.png" alt="HTU Logo" width={64} height={64} className="object-contain" />
+      <div className="flex flex-1 flex-col justify-center py-10 px-4 sm:px-6 lg:px-16 bg-gradient-to-br from-blue-700 via-blue-600 to-red-600 lg:bg-none lg:bg-white relative">
+        {/* Mobile decorative background elements */}
+        <div className="absolute inset-0 overflow-hidden lg:hidden pointer-events-none">
+          <div className="absolute top-10 left-10 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
+          <div className="absolute bottom-10 right-10 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
+        </div>
+
+        <div className="w-full max-w-md mx-auto bg-white rounded-[2.5rem] shadow-2xl lg:shadow-none lg:bg-transparent p-8 sm:p-10 lg:p-0 lg:border-none relative z-10">
+          <div className="lg:hidden flex flex-col items-center justify-center gap-4 mb-10">
+            <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-xl overflow-hidden p-2 ring-4 ring-slate-50 dark:ring-slate-800">
+              <Image src="/htu-logo.png" alt="HTU Logo" width={96} height={96} className="object-contain" />
             </div>
-            <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white">HTU Attendance</h1>
+            <div className="text-center">
+              <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">HTU Attendance</h1>
+              <p className="text-sm text-slate-500 font-medium mt-1">Smart tracking portal</p>
+            </div>
           </div>
 
           {/* LOGIN MODE */}

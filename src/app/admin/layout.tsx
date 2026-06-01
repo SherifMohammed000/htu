@@ -4,7 +4,8 @@ import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { LayoutDashboard, Users, BookOpen, Settings, LogOut, Menu, X, ShieldCheck } from "lucide-react";
+import Image from "next/image";
+import { LayoutDashboard, Users, UserPlus, Settings, LogOut, Menu, X } from "lucide-react";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user, isLoading, logout } = useAuth();
@@ -28,7 +29,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const navLinks = [
     { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/admin/users", label: "Users", icon: Users },
-    { href: "/admin/courses", label: "Courses", icon: BookOpen },
+    { href: "/admin/courses", label: "Courses", icon: UserPlus },
     { href: "/admin/settings", label: "Settings", icon: Settings },
   ];
 
@@ -37,10 +38,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Mobile top bar */}
       <div className="md:hidden bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-4 py-3 flex justify-between items-center sticky top-0 z-30">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-blue-700 rounded-lg flex items-center justify-center text-white font-bold text-xs">
-            HTU
+          <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center shadow-sm overflow-hidden p-0.5">
+            <Image src="/htu-logo.png" alt="HTU" width={32} height={32} className="object-contain" />
           </div>
-          <span className="font-semibold text-slate-900 dark:text-white">Admin Panel</span>
+          <span className="font-bold text-slate-900 dark:text-white tracking-tight">HTU Admin</span>
         </div>
         <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2 text-slate-600 dark:text-slate-300">
           {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -51,14 +52,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <div className={`fixed inset-y-0 left-0 z-20 w-64 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 transform transition-transform duration-200 ease-in-out md:translate-x-0 ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"}`}>
         <div className="h-full flex flex-col">
           <div className="p-6 hidden md:flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-700 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-blue-700/30">
-              HTU
+            <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg overflow-hidden p-1">
+              <Image src="/htu-logo.png" alt="HTU" width={40} height={40} className="object-contain" />
             </div>
             <div>
-              <h1 className="font-bold text-slate-900 dark:text-white leading-tight">Admin Panel</h1>
-              <p className="text-xs text-slate-500 font-medium flex items-center gap-1">
-                <ShieldCheck className="w-3 h-3" /> Super Admin
-              </p>
+              <h1 className="font-extrabold text-slate-900 dark:text-white leading-tight">HTU</h1>
+              <p className="text-xs text-slate-500 font-semibold tracking-wide uppercase">Admin</p>
             </div>
           </div>
 
