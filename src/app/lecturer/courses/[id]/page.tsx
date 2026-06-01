@@ -13,7 +13,7 @@ export default function CourseSession({ params }: { params: Promise<{ id: string
   const { user } = useAuth();
   const router = useRouter();
   
-  const [course, setCourse] = useState(MOCK_COURSES.find(c => c.id === courseId));
+  const course = MOCK_COURSES.find(c => c.id === courseId);
   const [activeSession, setActiveSession] = useState<AttendanceSession | null>(null);
   const [qrToken, setQrToken] = useState("");
   const [timeRemaining, setTimeRemaining] = useState(30);
@@ -45,7 +45,7 @@ export default function CourseSession({ params }: { params: Promise<{ id: string
           setQrToken(newSession.qrToken);
           setLocationStatus("Location locked successfully");
         },
-        (error) => {
+        () => {
           setLocationStatus("Location access denied. Cannot start session with Geofencing.");
           alert("Please enable location services to use geofencing.");
         }
@@ -126,7 +126,7 @@ export default function CourseSession({ params }: { params: Promise<{ id: string
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
             {course.courseName}
-            <span className="px-2.5 py-1 text-sm rounded-lg bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300 font-semibold tracking-wider">
+            <span className="px-2.5 py-1 text-sm rounded-lg bg-blue-50 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 font-semibold tracking-wider">
               {course.courseCode}
             </span>
           </h1>
@@ -135,7 +135,7 @@ export default function CourseSession({ params }: { params: Promise<{ id: string
 
       {!activeSession ? (
         <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-8 text-center max-w-2xl mx-auto mt-12 shadow-sm">
-          <div className="w-20 h-20 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
+          <div className="w-20 h-20 bg-blue-50 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
             <MapPin className="w-10 h-10 text-blue-600 dark:text-blue-400" />
           </div>
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Ready to start class?</h2>
@@ -144,7 +144,7 @@ export default function CourseSession({ params }: { params: Promise<{ id: string
           </p>
           <button
             onClick={startSession}
-            className="w-full sm:w-auto px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-lg shadow-lg shadow-blue-600/30 transition-all active:scale-95"
+            className="w-full sm:w-auto px-8 py-4 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold text-lg shadow-lg shadow-red-600/30 transition-all active:scale-95"
           >
             Start Class Session
           </button>
@@ -154,16 +154,16 @@ export default function CourseSession({ params }: { params: Promise<{ id: string
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Active Session Left Panel (QR & PIN) */}
           <div className="bg-white dark:bg-slate-800 rounded-3xl border border-blue-200 dark:border-blue-900/50 p-8 shadow-xl shadow-blue-100 dark:shadow-none flex flex-col items-center justify-center relative overflow-hidden">
-            <div className="absolute top-0 inset-x-0 h-2 bg-blue-100 dark:bg-blue-900/30">
+            <div className="absolute top-0 inset-x-0 h-2 bg-red-100 dark:bg-red-900/30">
               <div 
-                className="h-full bg-blue-600 transition-all duration-1000 ease-linear"
+                className="h-full bg-red-600 transition-all duration-1000 ease-linear"
                 style={{ width: `${(timeRemaining / 30) * 100}%` }}
               />
             </div>
             
             <div className="flex w-full justify-between items-center mb-8">
-              <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-medium bg-emerald-50 dark:bg-emerald-900/20 px-3 py-1.5 rounded-full text-sm">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <div className="flex items-center gap-2 text-red-600 dark:text-red-400 font-medium bg-red-50 dark:bg-red-900/20 px-3 py-1.5 rounded-full text-sm">
+                <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
                 Live Session
               </div>
               <div className="text-sm font-medium text-slate-500 dark:text-slate-400 flex items-center gap-2">
@@ -226,7 +226,7 @@ export default function CourseSession({ params }: { params: Promise<{ id: string
 
               <div className="space-y-4">
                 <div className="flex items-center gap-3 p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl">
-                  <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 rounded-lg">
+                  <div className="p-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 rounded-lg">
                     <MapPin className="w-5 h-5" />
                   </div>
                   <div>

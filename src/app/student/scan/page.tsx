@@ -72,7 +72,7 @@ export default function StudentScan() {
             setErrorMessage("Invalid or expired PIN code.");
           }
         },
-        (error) => {
+        () => {
           setStatus("error");
           setErrorMessage("Location access denied. Please enable location services to check in.");
         }
@@ -86,8 +86,8 @@ export default function StudentScan() {
   if (status === "success") {
     return (
       <div className="max-w-md mx-auto mt-12 bg-white dark:bg-slate-800 rounded-3xl p-8 border border-slate-200 dark:border-slate-700 shadow-xl text-center animate-in zoom-in-95 duration-500">
-        <div className="w-24 h-24 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
-          <CheckCircle className="w-12 h-12 text-emerald-600 dark:text-emerald-400" />
+        <div className="w-24 h-24 bg-blue-50 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
+          <CheckCircle className="w-12 h-12 text-blue-600 dark:text-blue-400" />
         </div>
         <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">Check-in Successful!</h2>
         <p className="text-slate-500 dark:text-slate-400 mb-8">
@@ -115,17 +115,17 @@ export default function StudentScan() {
         <div className="bg-slate-900 aspect-video relative flex flex-col items-center justify-center">
           {status === "scanning" ? (
             <div className="text-center">
-              <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-              <p className="text-blue-400 font-medium animate-pulse">Scanning...</p>
+              <div className="w-12 h-12 border-4 border-red-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+              <p className="text-red-400 font-medium animate-pulse">Scanning...</p>
             </div>
           ) : (
             <>
               <div className="absolute inset-0 border-[40px] border-black/40" />
               <div className="relative z-10 w-48 h-48 border-2 border-white/50 rounded-3xl flex items-center justify-center">
-                <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-blue-500 rounded-tl-xl" />
-                <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-blue-500 rounded-tr-xl" />
-                <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-blue-500 rounded-bl-xl" />
-                <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-blue-500 rounded-br-xl" />
+                <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-red-500 rounded-tl-xl" />
+                <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-red-500 rounded-tr-xl" />
+                <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-red-500 rounded-bl-xl" />
+                <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-red-500 rounded-br-xl" />
                 <Camera className="w-12 h-12 text-white/50" />
               </div>
             </>
@@ -160,7 +160,7 @@ export default function StudentScan() {
                 value={pin}
                 onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
                 placeholder="0000"
-                className="w-full text-center text-4xl font-mono tracking-[0.5em] py-4 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-300 dark:placeholder-slate-700 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                className="w-full text-center text-4xl font-mono tracking-[0.5em] py-4 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-300 dark:placeholder-slate-700 focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-all"
               />
             </div>
 
@@ -172,7 +172,7 @@ export default function StudentScan() {
             <button
               type="submit"
               disabled={pin.length !== 4 || status === "verifying"}
-              className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
+              className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
             >
               {status === "verifying" ? (
                 <>

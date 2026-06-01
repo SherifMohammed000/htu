@@ -13,7 +13,7 @@ export default function StudentDashboard() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
-            Hello, {user?.fullName.split(' ')[0]}!
+            Hello, {user?.fullName?.split(' ')[0]}!
           </h1>
           <p className="text-slate-500 dark:text-slate-400 mt-1">
             Check your attendance status or scan a new class code.
@@ -22,7 +22,7 @@ export default function StudentDashboard() {
         
         <Link 
           href="/student/scan" 
-          className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-lg shadow-blue-600/30 transition-all active:scale-95"
+          className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl shadow-lg shadow-red-600/30 transition-all active:scale-95"
         >
           <ScanLine className="w-5 h-5" />
           Scan QR Code
@@ -31,7 +31,7 @@ export default function StudentDashboard() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-100 dark:border-slate-700 shadow-sm flex items-center gap-4">
-          <div className="bg-emerald-100 dark:bg-emerald-900/30 p-4 rounded-xl text-emerald-600 dark:text-emerald-400">
+          <div className="bg-red-50 dark:bg-red-900/30 p-4 rounded-xl text-red-600 dark:text-red-400">
             <CheckCircle2 className="w-6 h-6" />
           </div>
           <div>
@@ -40,7 +40,7 @@ export default function StudentDashboard() {
           </div>
         </div>
         <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-100 dark:border-slate-700 shadow-sm flex items-center gap-4">
-          <div className="bg-blue-100 dark:bg-blue-900/30 p-4 rounded-xl text-blue-600 dark:text-blue-400">
+          <div className="bg-blue-50 dark:bg-blue-900/30 p-4 rounded-xl text-blue-600 dark:text-blue-400">
             <BookOpen className="w-6 h-6" />
           </div>
           <div>
@@ -59,7 +59,7 @@ export default function StudentDashboard() {
             <div key={course.id} className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300">
+                  <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
                     {course.courseCode}
                   </span>
                 </div>
@@ -69,7 +69,7 @@ export default function StudentDashboard() {
                 </p>
               </div>
               <div className="flex flex-col items-end gap-1">
-                <span className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">100%</span>
+                <span className="text-2xl font-bold text-red-600 dark:text-red-400">100%</span>
                 <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Attendance</span>
               </div>
             </div>

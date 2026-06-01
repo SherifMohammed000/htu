@@ -26,8 +26,12 @@ export default function Home() {
     setIsSubmitting(true);
     try {
       await login(email);
-    } catch (err: any) {
-      setError(err.message || "Failed to login");
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message || "Failed to login");
+      } else {
+        setError("Failed to login");
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -36,16 +40,16 @@ export default function Home() {
   if (isLoading || user) {
     return (
       <div className="flex items-center justify-center h-full flex-col gap-4 mt-32">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
         <p className="text-slate-500">Loading your workspace...</p>
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen flex-col justify-center py-12 sm:px-6 lg:px-8 bg-slate-50 dark:bg-slate-900">
+    <div className="flex min-h-screen flex-col justify-center py-12 sm:px-6 lg:px-8 bg-white dark:bg-slate-900">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-blue-50 dark:bg-blue-900/30">
           <QrCode className="h-8 w-8 text-blue-600 dark:text-blue-400" />
         </div>
         <h2 className="mt-6 text-center text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
@@ -72,7 +76,7 @@ export default function Home() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="block w-full appearance-none rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-3 placeholder-slate-400 focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm dark:bg-slate-900 dark:text-white transition-colors"
+                  className="block w-full appearance-none rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-3 placeholder-slate-400 focus:border-red-500 focus:outline-none focus:ring-red-500 sm:text-sm dark:bg-slate-900 dark:text-white transition-colors"
                   placeholder="e.g. sarah.connor@htu.edu"
                 />
               </div>
@@ -88,7 +92,7 @@ export default function Home() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="flex w-full justify-center rounded-xl border border-transparent bg-blue-600 py-3 px-4 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-70 disabled:cursor-not-allowed transition-all"
+                className="flex w-full justify-center rounded-xl border border-transparent bg-red-600 py-3 px-4 text-sm font-medium text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-70 disabled:cursor-not-allowed transition-all"
               >
                 {isSubmitting ? (
                   <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />

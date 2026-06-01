@@ -33,11 +33,11 @@ export default function StudentLayout({
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
+    <div className="min-h-screen bg-white dark:bg-slate-900">
       {/* Mobile Navigation Bar */}
       <div className="md:hidden bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-4 py-3 flex justify-between items-center sticky top-0 z-30">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">
+          <div className="w-8 h-8 bg-blue-700 rounded-lg flex items-center justify-center text-white font-bold">
             HTU
           </div>
           <span className="font-semibold text-slate-900 dark:text-white">Student Portal</span>
@@ -51,7 +51,7 @@ export default function StudentLayout({
       <div className={`fixed inset-y-0 left-0 z-20 w-64 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 transform transition-transform duration-200 ease-in-out md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="h-full flex flex-col">
           <div className="p-6 hidden md:flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-blue-600/30">
+            <div className="w-10 h-10 bg-blue-700 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-blue-700/30">
               HTU
             </div>
             <div>
@@ -83,11 +83,11 @@ export default function StudentLayout({
                   onClick={() => setIsMobileMenuOpen(false)}
                   className={`flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl transition-all ${
                     isActive 
-                      ? "bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300" 
+                      ? "bg-red-50 text-red-700 dark:bg-red-900/40 dark:text-red-300" 
                       : "text-slate-600 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800/50 dark:hover:text-slate-200"
                   }`}
                 >
-                  <Icon className={`w-5 h-5 ${isActive ? "text-blue-600 dark:text-blue-400" : ""}`} />
+                  <Icon className={`w-5 h-5 ${isActive ? "text-red-600 dark:text-red-400" : ""}`} />
                   {link.label}
                 </Link>
               );
