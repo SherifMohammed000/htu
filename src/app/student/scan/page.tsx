@@ -2,84 +2,95 @@
 
 import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { MOCK_DB } from "@/lib/mock/db";
-import { Camera, MapPin, CheckCircle, AlertTriangle, ArrowRight } from "lucide-react";
+import { recordAttendance } from "@/lib/firebase/firestore";
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { db } from "@/lib/firebase/config";
+import { AttendanceSession } from "@/lib/mock/db";
+import { Camera, MapPin, CheckCircle, AlertTriangle, ArrowRight, QrCode } from "lucide-react";
 import Link from "next/link";
+
+// Haversine formula — returns distance in metres
+function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371e3;
+  const φ1 = (lat1 * Math.PI) / 180;
+  const φ2 = (lat2 * Math.PI) / 180;
+  const Δφ = ((lat2 - lat1) * Math.PI) / 180;
+  const Δλ = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(Δφ / 2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
 
 export default function StudentScan() {
   const { user } = useAuth();
   const [pin, setPin] = useState("");
-  const [status, setStatus] = useState<"idle" | "scanning" | "verifying" | "success" | "error">("idle");
+  const [status, setStatus] = useState<"idle" | "verifying" | "success" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
-  
-  // In a real app, this would come from a QR code scanner component
-  // We'll simulate scanning the active session's QR code token
-  const simulateScan = () => {
-    setStatus("scanning");
-    setTimeout(() => {
-      setStatus("idle");
-      // Pre-fill the form with something to show it "worked"
-    }, 1500);
-  };
 
-  const verifyAttendance = (e: React.FormEvent) => {
+  const verifyAttendance = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) return;
     setStatus("verifying");
-    
-    // Simulate verifying PIN and Location
+
+    const doVerify = async (lat: number, lng: number) => {
+      try {
+        // Find active session matching PIN
+        const q = query(
+          collection(db, "sessions"),
+          where("pinCode", "==", pin),
+          where("status", "==", "active")
+        );
+        const snap = await getDocs(q);
+
+        if (snap.empty) {
+          setStatus("error");
+          setErrorMessage("Invalid or expired PIN code. Please check with your lecturer.");
+          return;
+        }
+
+        const sessionDoc = snap.docs[0];
+        const session = { id: sessionDoc.id, ...sessionDoc.data() } as AttendanceSession;
+
+        // Geofencing check — skip if location is 0,0 (permission denied on lecturer side)
+        if (session.location.lat !== 0 && session.location.lng !== 0 && lat !== 0) {
+          const distance = haversineDistance(session.location.lat, session.location.lng, lat, lng);
+          if (distance > 30) {
+            setStatus("error");
+            setErrorMessage(
+              `You are ${Math.round(distance)}m from the classroom. You must be within 30m to check in.`
+            );
+            return;
+          }
+        }
+
+        // Record attendance
+        await recordAttendance({
+          studentId: user.id,
+          sessionId: session.id,
+          timestamp: new Date().toISOString(),
+          gpsCoordinates: { lat, lng },
+          status: "present",
+          method: "qr",
+        });
+
+        setStatus("success");
+      } catch (err: unknown) {
+        setStatus("error");
+        setErrorMessage(err instanceof Error ? err.message : "An error occurred. Please try again.");
+      }
+    };
+
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
-        (position) => {
-          // Find an active session with this PIN
-          const session = MOCK_DB.sessions.find(s => s.pinCode === pin && s.status === 'active');
-          
-          if (session) {
-            // Check Geofencing (Haversine formula simplified)
-            const R = 6371e3; // metres
-            const φ1 = session.location.lat * Math.PI/180;
-            const φ2 = position.coords.latitude * Math.PI/180;
-            const Δφ = (position.coords.latitude-session.location.lat) * Math.PI/180;
-            const Δλ = (position.coords.longitude-session.location.lng) * Math.PI/180;
-
-            const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
-                      Math.cos(φ1) * Math.cos(φ2) *
-                      Math.sin(Δλ/2) * Math.sin(Δλ/2);
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-            const distance = R * c; // in metres
-
-            // 30 meters geofencing radius
-            if (distance <= 30) {
-              // Record attendance
-              MOCK_DB.records.push({
-                id: `record_${Date.now()}`,
-                studentId: user!.id,
-                sessionId: session.id,
-                timestamp: new Date().toISOString(),
-                gpsCoordinates: {
-                  lat: position.coords.latitude,
-                  lng: position.coords.longitude
-                },
-                status: 'present',
-                method: 'qr'
-              });
-              setStatus("success");
-            } else {
-              setStatus("error");
-              setErrorMessage(`You are too far from the classroom (${Math.round(distance)}m away). Maximum allowed radius is 30m.`);
-            }
-          } else {
-            setStatus("error");
-            setErrorMessage("Invalid or expired PIN code.");
-          }
-        },
+        (pos) => doVerify(pos.coords.latitude, pos.coords.longitude),
         () => {
+          // Location denied — still try to record without GPS
           setStatus("error");
           setErrorMessage("Location access denied. Please enable location services to check in.");
         }
       );
     } else {
-      setStatus("error");
-      setErrorMessage("Geolocation is not supported by your browser.");
+      doVerify(0, 0);
     }
   };
 
@@ -91,11 +102,11 @@ export default function StudentScan() {
         </div>
         <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">Check-in Successful!</h2>
         <p className="text-slate-500 dark:text-slate-400 mb-8">
-          Your attendance has been recorded and verified via GPS.
+          Your attendance has been recorded and verified.
         </p>
         <Link
           href="/student/dashboard"
-          className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-900 dark:text-white rounded-xl font-bold transition-colors"
+          className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-colors"
         >
           Return to Dashboard
         </Link>
@@ -106,37 +117,22 @@ export default function StudentScan() {
   return (
     <div className="max-w-lg mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="text-center">
-        <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Scan & Check-in</h1>
-        <p className="text-slate-500 mt-2">Scan the QR code displayed by your lecturer and enter the classroom PIN.</p>
+        <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Scan &amp; Check-in</h1>
+        <p className="text-slate-500 mt-2">Enter the 4-digit PIN shown by your lecturer.</p>
       </div>
 
       <div className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
-        {/* Mock QR Scanner Area */}
-        <div className="bg-slate-900 aspect-video relative flex flex-col items-center justify-center">
-          {status === "scanning" ? (
-            <div className="text-center">
-              <div className="w-12 h-12 border-4 border-red-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-              <p className="text-red-400 font-medium animate-pulse">Scanning...</p>
-            </div>
-          ) : (
-            <>
-              <div className="absolute inset-0 border-[40px] border-black/40" />
-              <div className="relative z-10 w-48 h-48 border-2 border-white/50 rounded-3xl flex items-center justify-center">
-                <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-red-500 rounded-tl-xl" />
-                <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-red-500 rounded-tr-xl" />
-                <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-red-500 rounded-bl-xl" />
-                <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-red-500 rounded-br-xl" />
-                <Camera className="w-12 h-12 text-white/50" />
-              </div>
-            </>
-          )}
-          <button 
-            onClick={simulateScan}
-            disabled={status === "scanning"}
-            className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white/10 hover:bg-white/20 backdrop-blur-md text-white px-4 py-2 rounded-full text-sm font-medium transition-colors"
-          >
-            Start Camera
-          </button>
+        {/* QR visual area */}
+        <div className="bg-slate-900 py-12 relative flex flex-col items-center justify-center gap-4">
+          <div className="relative z-10 w-40 h-40 border-2 border-white/30 rounded-3xl flex items-center justify-center">
+            <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-red-500 rounded-tl-xl" />
+            <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-red-500 rounded-tr-xl" />
+            <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-red-500 rounded-bl-xl" />
+            <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-red-500 rounded-br-xl" />
+            <QrCode className="w-16 h-16 text-white/40" />
+          </div>
+          <p className="text-white/60 text-sm">Point camera at lecturer&apos;s QR code</p>
+          <p className="text-white/40 text-xs">(Camera scanning coming soon — use PIN below)</p>
         </div>
 
         <div className="p-6">
@@ -149,22 +145,26 @@ export default function StudentScan() {
 
           <form onSubmit={verifyAttendance} className="space-y-6">
             <div>
-              <label htmlFor="pin" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+              <label htmlFor="pin" className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
                 Classroom PIN
               </label>
               <input
                 id="pin"
                 type="text"
+                inputMode="numeric"
                 maxLength={4}
                 required
                 value={pin}
-                onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
-                placeholder="0000"
-                className="w-full text-center text-4xl font-mono tracking-[0.5em] py-4 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-300 dark:placeholder-slate-700 focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-all"
+                onChange={(e) => {
+                  setStatus("idle");
+                  setPin(e.target.value.replace(/\D/g, ""));
+                }}
+                placeholder="0 0 0 0"
+                className="w-full text-center text-5xl font-mono tracking-[0.5em] py-5 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-200 dark:placeholder-slate-700 focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-all"
               />
             </div>
 
-            <div className="flex items-center justify-center gap-2 text-sm text-slate-500 dark:text-slate-400 pb-2">
+            <div className="flex items-center justify-center gap-2 text-sm text-slate-400">
               <MapPin className="w-4 h-4" />
               Location will be verified automatically
             </div>
@@ -181,7 +181,7 @@ export default function StudentScan() {
                 </>
               ) : (
                 <>
-                  Verify & Check-in
+                  Verify &amp; Check-in
                   <ArrowRight className="w-5 h-5" />
                 </>
               )}

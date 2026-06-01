@@ -1,12 +1,24 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { User, MOCK_USERS } from '@/lib/mock/db';
+import {
+  getAuth,
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut,
+  User as FirebaseUser,
+} from 'firebase/auth';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { auth, db } from '@/lib/firebase/config';
+import { User } from '@/lib/mock/db';
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string) => Promise<void>;
-  logout: () => void;
+  firebaseUser: FirebaseUser | null;
+  login: (identifier: string, password: string) => Promise<void>;
+  registerStudent: (indexNumber: string, fullName: string, password: string, ipAddress: string) => Promise<void>;
+  logout: () => Promise<void>;
   isLoading: boolean;
 }
 
@@ -14,44 +26,84 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check local storage for mocked session
-    const storedUser = localStorage.getItem('mock_user');
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch (e) {
-        console.error('Failed to parse stored user', e);
+    const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
+      if (fbUser) {
+        setFirebaseUser(fbUser);
+        // Fetch the user profile from Firestore
+        try {
+          const userDoc = await getDoc(doc(db, 'users', fbUser.uid));
+          if (userDoc.exists()) {
+            setUser({ id: fbUser.uid, ...userDoc.data() } as User);
+          } else {
+            // Fallback: build a basic user from Firebase Auth data
+            setUser({
+              id: fbUser.uid,
+              fullName: fbUser.displayName || fbUser.email?.split('@')[0] || 'Unknown',
+              email: fbUser.email || '',
+              department: '',
+              role: 'student',
+            });
+          }
+        } catch (e) {
+          console.error('Error fetching user profile:', e);
+          setUser(null);
+        }
+      } else {
+        setFirebaseUser(null);
+        setUser(null);
       }
-    }
-    setIsLoading(false);
+      setIsLoading(false);
+    });
+
+    return () => unsubscribe();
   }, []);
 
-  const login = async (email: string) => {
+  const login = async (identifier: string, password: string) => {
     setIsLoading(true);
-    // Simulate network delay
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    
-    const foundUser = MOCK_USERS.find(u => u.email === email);
-    if (foundUser) {
-      setUser(foundUser);
-      localStorage.setItem('mock_user', JSON.stringify(foundUser));
+    try {
+      // If no @ is present, assume it's a student index number
+      const email = identifier.includes('@') ? identifier : `${identifier}@student.htu.edu`;
+      await signInWithEmailAndPassword(auth, email, password);
+    } catch (err) {
       setIsLoading(false);
-    } else {
-      setIsLoading(false);
-      throw new Error('User not found. Try sarah.connor@htu.edu or john.doe@student.htu.edu');
+      throw err;
     }
   };
 
-  const logout = () => {
+  const registerStudent = async (indexNumber: string, fullName: string, password: string, ipAddress: string) => {
+    setIsLoading(true);
+    try {
+      const email = `${indexNumber}@student.htu.edu`;
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      
+      // Create user profile in Firestore
+      await setDoc(doc(db, 'users', userCredential.user.uid), {
+        id: userCredential.user.uid,
+        indexNumber,
+        fullName,
+        email,
+        role: 'student',
+        ipAddress,
+        createdAt: new Date().toISOString()
+      });
+    } catch (err) {
+      setIsLoading(false);
+      throw err;
+    }
+  };
+
+  const logout = async () => {
+    await signOut(auth);
     setUser(null);
-    localStorage.removeItem('mock_user');
+    setFirebaseUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, firebaseUser, login, registerStudent, logout, isLoading }}>
       {children}
     </AuthContext.Provider>
   );

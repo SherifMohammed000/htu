@@ -1,0 +1,37 @@
+[
+  {
+    "name": "Digital Marketing",
+    "code": "BICT 214",
+    "lecturer": "Dr. M. Boakye Yiadom"
+  },
+  {
+    "name": "Human Computer Interaction",
+    "code": "BICT 206",
+    "lecturer": "Dr. Victor K. Agbesi"
+  },
+  {
+    "name": "Database System II",
+    "code": "BICT 202",
+    "lecturer": "Mr. A. Sackey"
+  },
+  {
+    "name": "Object Oriented Programming II",
+    "code": "BICT 212",
+    "lecturer": "Mr. A. Asiedu"
+  },
+  {
+    "name": "Operating Systems",
+    "code": "BICT 210",
+    "lecturer": "Mr. Prince Modey"
+  },
+  {
+    "name": "Web Technology II",
+    "code": "BICT 204",
+    "lecturer": "Mr. Victor W. Gbedawo"
+  },
+  {
+    "name": "Data Communication and Network II",
+    "code": "BICT 208",
+    "lecturer": "Mr. M. Agbenorto"
+  }
+]
