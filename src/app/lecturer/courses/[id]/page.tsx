@@ -25,7 +25,7 @@ import {
   PenLine,
 } from "lucide-react";
 import Link from "next/link";
-import QRCode from "qrcode.react";
+import { QRCodeSVG as QRCode } from "qrcode.react";
 import { Course } from "@/lib/mock/db";
 
 export default function CourseSession({ params }: { params: Promise<{ id: string }> }) {
