@@ -11,7 +11,7 @@ export default function Home() {
   const { user, login, registerStudent, isLoading } = useAuth();
   const router = useRouter();
   
-  const [showSplash, setShowSplash] = useState(true);
+  const [showSplash, setShowSplash] = useState(false);
   const [mode, setMode] = useState<"login" | "activate-step-1" | "activate-step-2">("login");
   
   const [identifier, setIdentifier] = useState("");
@@ -72,10 +72,16 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowSplash(false);
-    }, 5000);
-    return () => clearTimeout(timer);
+    const isStandalone = window.matchMedia("(display-mode: standalone)").matches || 
+      (window.navigator as any).standalone === true;
+
+    if (isStandalone) {
+      setShowSplash(true);
+      const timer = setTimeout(() => {
+        setShowSplash(false);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
   }, []);
 
   const handleInstallClick = async () => {
