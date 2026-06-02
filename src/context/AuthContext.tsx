@@ -9,7 +9,7 @@ import {
   signOut,
   User as FirebaseUser,
 } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, query, where, getDocs, updateDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase/config';
 import { User } from '@/lib/mock/db';
 
@@ -18,6 +18,7 @@ interface AuthContextType {
   firebaseUser: FirebaseUser | null;
   login: (identifier: string, password: string) => Promise<void>;
   registerStudent: (indexNumber: string, fullName: string, password: string, ipAddress: string) => Promise<void>;
+  registerLecturer: (courseCode: string, fullName: string, password: string, ipAddress: string) => Promise<void>;
   logout: () => Promise<void>;
   isLoading: boolean;
 }
@@ -65,8 +66,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (identifier: string, password: string) => {
     setIsLoading(true);
     try {
-      // If no @ is present, assume it's a student index number
-      const email = identifier.includes('@') ? identifier : `${identifier}@student.htu.edu`;
+      // Check if the identifier is a course code (like CS301, MATH201, ENG101)
+      const isCourseCode = /^[A-Z]{2,5}\d{3,4}$/i.test(identifier.trim());
+      const email = identifier.includes('@')
+        ? identifier
+        : isCourseCode
+          ? `${identifier.trim().toUpperCase()}@lecturer.htu.edu`
+          : `${identifier.trim()}@student.htu.edu`;
+      
       await signInWithEmailAndPassword(auth, email, password);
     } catch (err) {
       setIsLoading(false);
@@ -96,6 +103,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const registerLecturer = async (courseCode: string, fullName: string, password: string, ipAddress: string) => {
+    setIsLoading(true);
+    try {
+      const formattedCode = courseCode.trim().toUpperCase();
+      const email = `${formattedCode}@lecturer.htu.edu`;
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      
+      // Create lecturer profile in Firestore
+      await setDoc(doc(db, 'users', userCredential.user.uid), {
+        id: userCredential.user.uid,
+        courseCode: formattedCode,
+        fullName,
+        email,
+        role: 'lecturer',
+        ipAddress,
+        createdAt: new Date().toISOString()
+      });
+
+      // Update any course with this courseCode to use the new lecturer UID
+      const q = query(collection(db, 'courses'), where('courseCode', '==', formattedCode));
+      const snap = await getDocs(q);
+      for (const d of snap.docs) {
+        await updateDoc(d.ref, { lecturerId: userCredential.user.uid });
+      }
+    } catch (err) {
+      setIsLoading(false);
+      throw err;
+    }
+  };
+
   const logout = async () => {
     await signOut(auth);
     setUser(null);
@@ -103,7 +140,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, firebaseUser, login, registerStudent, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, firebaseUser, login, registerStudent, registerLecturer, logout, isLoading }}>
       {children}
     </AuthContext.Provider>
   );

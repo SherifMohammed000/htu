@@ -8,7 +8,7 @@ import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
 
 export default function Home() {
-  const { user, login, registerStudent, isLoading } = useAuth();
+  const { user, login, registerStudent, registerLecturer, isLoading } = useAuth();
   const router = useRouter();
   
   const [showSplash, setShowSplash] = useState(false);
@@ -85,10 +85,8 @@ export default function Home() {
   }, []);
 
   const handleInstallClick = async () => {
-    // Already installed
     if (isInstalled) return;
 
-    // Android / Desktop Chrome — native prompt available
     if (deferredPrompt) {
       deferredPrompt.prompt();
       const { outcome } = await deferredPrompt.userChoice;
@@ -99,13 +97,11 @@ export default function Home() {
       return;
     }
 
-    // iOS — show instruction modal
     if (getIsIOS()) {
       setShowIOSModal(true);
       return;
     }
 
-    // Fallback for other browsers — show iOS modal with generic instructions
     setShowIOSModal(true);
   };
 
@@ -127,16 +123,40 @@ export default function Home() {
 
   useEffect(() => {
     if (mode === "activate-step-1") {
-      const fetchStudents = async () => {
+      const fetchAutocompleteData = async () => {
         try {
-          const querySnapshot = await getDocs(collection(db, "students"));
-          const studentsData = querySnapshot.docs.map(doc => doc.data());
-          setAllStudents(studentsData);
+          const [studentsSnap, coursesSnap, usersSnap] = await Promise.all([
+            getDocs(collection(db, "students")),
+            getDocs(collection(db, "courses")),
+            getDocs(query(collection(db, "users"), where("role", "==", "lecturer"))),
+          ]);
+          
+          const studentsData = studentsSnap.docs.map(doc => ({
+            name: doc.data().name,
+            indexNumber: doc.data().indexNumber,
+            type: "student"
+          }));
+          
+          const lecturerMap: Record<string, string> = {};
+          usersSnap.docs.forEach(doc => {
+            lecturerMap[doc.id] = doc.data().fullName;
+          });
+          
+          const coursesData = coursesSnap.docs.map(doc => {
+            const data = doc.data();
+            return {
+              name: lecturerMap[data.lecturerId] || "Unknown Lecturer",
+              indexNumber: data.courseCode,
+              type: "lecturer"
+            };
+          });
+          
+          setAllStudents([...studentsData, ...coursesData]);
         } catch (e) {
-          console.error("Failed to fetch students for autocomplete", e);
+          console.error("Failed to fetch autocomplete data", e);
         }
       };
-      fetchStudents();
+      fetchAutocompleteData();
     }
   }, [mode]);
 
@@ -189,9 +209,9 @@ export default function Home() {
     setIsSubmitting(true);
     
     try {
-      const matched = allStudents.find(s => s.indexNumber === identifier);
+      const matched = allStudents.find(s => s.indexNumber.trim().toUpperCase() === identifier.trim().toUpperCase());
       if (!matched) {
-        setError("No student found with this Index Number.");
+        setError("No record found with this ID.");
         setIsSubmitting(false);
         return;
       }
@@ -201,7 +221,7 @@ export default function Home() {
       const isNameMatch = typedParts.every((part: string) => actualLower.includes(part));
 
       if (!isNameMatch) {
-        setError("The Full Name does not match our records for this Index Number.");
+        setError("The Name does not match our records for this ID.");
         setIsSubmitting(false);
         return;
       }
@@ -244,7 +264,12 @@ export default function Home() {
         return;
       }
       
-      await registerStudent(identifier, fullName, password, ip);
+      const matched = allStudents.find(s => s.indexNumber.trim().toUpperCase() === identifier.trim().toUpperCase());
+      if (matched && matched.type === "lecturer") {
+        await registerLecturer(identifier, fullName, password, ip);
+      } else {
+        await registerStudent(identifier, fullName, password, ip);
+      }
     } catch (err: any) {
       console.error(err);
       if (err.code === "auth/email-already-in-use") {
@@ -269,7 +294,6 @@ export default function Home() {
   if (showSplash) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-sky-400 via-blue-700 to-red-600 relative overflow-hidden text-white">
-        {/* Animated background blobs */}
         <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-white/10 rounded-full blur-[120px] pointer-events-none -translate-x-1/2 -translate-y-1/2 animate-pulse" />
         <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-red-500/30 rounded-full blur-[150px] pointer-events-none translate-x-1/3 translate-y-1/3 animate-pulse" />
         
@@ -285,7 +309,6 @@ export default function Home() {
             Smart Portal
           </p>
 
-          {/* Elegant 5-second progress bar */}
           <div className="w-64 h-2 bg-white/20 rounded-full overflow-hidden border border-white/10 p-[1px] mb-4">
             <div className="h-full bg-white rounded-full animate-progress" />
           </div>
@@ -307,7 +330,6 @@ export default function Home() {
 
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-sky-400 via-blue-700 to-red-600 relative overflow-hidden">
-      {/* Abstract background blobs for extra depth */}
       <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-white/10 rounded-full blur-[100px] pointer-events-none -translate-x-1/2 -translate-y-1/2" />
       <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-red-500/30 rounded-full blur-[120px] pointer-events-none translate-x-1/3 translate-y-1/3" />
       
@@ -384,7 +406,7 @@ export default function Home() {
               <form className="mt-8 space-y-5" onSubmit={handleLoginSubmit}>
                 <div>
                   <label htmlFor="identifier" className="block text-sm font-semibold mb-1.5 text-white/90">
-                    Index Number or Email
+                    ID
                   </label>
                   <input
                     id="identifier"
@@ -393,8 +415,8 @@ export default function Home() {
                     required
                     value={identifier}
                     onChange={(e) => setIdentifier(e.target.value)}
-                    className="block w-full rounded-xl border border-white/20 px-4 py-3 text-white bg-black/20 placeholder-white/50 focus:border-white focus:outline-none focus:ring-2 focus:ring-white/30 transition-all"
-                    placeholder="e.g. 0324080252"
+                    className="block w-full rounded-xl border border-white/20 px-4 py-3 text-white bg-black/20 placeholder-white/50 focus:border-white focus:outline-none focus:ring-2 focus:ring-white/30 transition-all font-semibold"
+                    placeholder="e.g. 0324080252 or CS301"
                   />
                 </div>
 
@@ -411,7 +433,7 @@ export default function Home() {
                       required
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="block w-full rounded-xl border border-white/20 px-4 py-3 pr-12 text-white bg-black/20 placeholder-white/50 focus:border-white focus:outline-none focus:ring-2 focus:ring-white/30 transition-all"
+                      className="block w-full rounded-xl border border-white/20 px-4 py-3 pr-12 text-white bg-black/20 placeholder-white/50 focus:border-white focus:outline-none focus:ring-2 focus:ring-white/30 transition-all font-semibold"
                       placeholder="••••••••"
                     />
                     <button
@@ -478,7 +500,7 @@ export default function Home() {
               <form className="mt-8 space-y-5" onSubmit={handleActivateStep1}>
                 <div>
                   <label htmlFor="identifier" className="block text-sm font-semibold mb-1.5 text-white/90">
-                    Index Number
+                    ID
                   </label>
                   <input
                     id="identifier"
@@ -489,20 +511,20 @@ export default function Home() {
                     onChange={(e) => {
                       const val = e.target.value;
                       setIdentifier(val);
-                      const match = allStudents.find(s => s.indexNumber === val);
+                      const match = allStudents.find(s => s.indexNumber.trim().toUpperCase() === val.trim().toUpperCase());
                       if (match) {
                         setFullName(match.name);
                         setShowSuggestions(false);
                       }
                     }}
-                    className="block w-full rounded-xl border border-white/20 px-4 py-3 text-white bg-black/20 placeholder-white/50 focus:border-white focus:outline-none focus:ring-2 focus:ring-white/30 transition-all"
-                    placeholder="e.g. 0324080252"
+                    className="block w-full rounded-xl border border-white/20 px-4 py-3 text-white bg-black/20 placeholder-white/50 focus:border-white focus:outline-none focus:ring-2 focus:ring-white/30 transition-all font-semibold"
+                    placeholder="e.g. 0324080252 or CS301"
                   />
                 </div>
 
                 <div ref={wrapperRef} className="relative">
                   <label htmlFor="fullName" className="block text-sm font-semibold mb-1.5 text-white/90">
-                    Full Name
+                    Name
                   </label>
                   <input
                     id="fullName"
@@ -516,8 +538,8 @@ export default function Home() {
                       setShowSuggestions(true);
                     }}
                     onFocus={() => setShowSuggestions(true)}
-                    className="block w-full rounded-xl border border-white/20 px-4 py-3 text-white bg-black/20 placeholder-white/50 focus:border-white focus:outline-none focus:ring-2 focus:ring-white/30 transition-all"
-                    placeholder="e.g. KOFI BISMARK ADDAE"
+                    className="block w-full rounded-xl border border-white/20 px-4 py-3 text-white bg-black/20 placeholder-white/50 focus:border-white focus:outline-none focus:ring-2 focus:ring-white/30 transition-all font-semibold"
+                    placeholder="e.g. KOFI BISMARK ADDAE or Dr. Amina"
                   />
                   
                   {showSuggestions && filteredStudents.length > 0 && (
@@ -532,8 +554,13 @@ export default function Home() {
                             setShowSuggestions(false);
                           }}
                         >
-                          <div className="font-bold">{s.name}</div>
-                          <div className="text-xs text-slate-500 mt-0.5">{s.indexNumber}</div>
+                          <div className="font-bold text-slate-900">{s.name}</div>
+                          <div className="text-xs text-slate-500 mt-1 flex items-center justify-between">
+                            <span>ID: {s.indexNumber}</span>
+                            <span className="bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase shrink-0">
+                              {s.type}
+                            </span>
+                          </div>
                         </li>
                       ))}
                     </ul>
@@ -598,7 +625,7 @@ export default function Home() {
                       required
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="block w-full rounded-xl border border-white/20 px-4 py-3 pr-12 text-white bg-black/20 placeholder-white/50 focus:border-white focus:outline-none focus:ring-2 focus:ring-white/30 transition-all"
+                      className="block w-full rounded-xl border border-white/20 px-4 py-3 pr-12 text-white bg-black/20 placeholder-white/50 focus:border-white focus:outline-none focus:ring-2 focus:ring-white/30 transition-all font-semibold"
                       placeholder="••••••••"
                     />
                     <button
@@ -623,7 +650,7 @@ export default function Home() {
                       required
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="block w-full rounded-xl border border-white/20 px-4 py-3 pr-12 text-white bg-black/20 placeholder-white/50 focus:border-white focus:outline-none focus:ring-2 focus:ring-white/30 transition-all"
+                      className="block w-full rounded-xl border border-white/20 px-4 py-3 pr-12 text-white bg-black/20 placeholder-white/50 focus:border-white focus:outline-none focus:ring-2 focus:ring-white/30 transition-all font-semibold"
                       placeholder="••••••••"
                     />
                   </div>
@@ -675,7 +702,6 @@ export default function Home() {
         </div>
       </div>
 
-      {/* iOS Install Instructions Modal */}
       {showIOSModal && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-200">
           <div className="bg-gradient-to-br from-sky-400 via-blue-700 to-red-600 rounded-t-3xl sm:rounded-3xl border border-white/20 shadow-2xl w-full max-w-md p-6 sm:p-8 text-white relative animate-in slide-in-from-bottom-8 sm:zoom-in-95 duration-300">
