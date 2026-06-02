@@ -47,8 +47,8 @@ export default function CourseRepLayout({
       {/* Mobile Navigation Bar */}
       <div className="md:hidden bg-white/10 backdrop-blur-xl border-b border-white/10 px-4 py-3 flex justify-between items-center sticky top-0 z-30 text-white">
         <div className="flex items-center gap-2">
-          <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center shadow-sm overflow-hidden p-0.5">
-            <img src="/uroll-logo.jpg" alt="HTU" className="w-8 h-8 object-contain" />
+          <div className="w-9 h-9 bg-white rounded-lg shadow-sm overflow-hidden">
+            <img src="/uroll-logo.jpg" alt="HTU" className="w-full h-full object-cover" />
           </div>
           <span className="font-bold tracking-tight text-white">HTU Attendance</span>
         </div>
@@ -61,8 +61,8 @@ export default function CourseRepLayout({
       <div className={`fixed inset-y-0 left-0 z-20 w-64 bg-white/10 backdrop-blur-xl border-r border-white/10 transform transition-transform duration-200 ease-in-out md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} text-white`}>
         <div className="h-full flex flex-col">
           <div className="p-6 hidden md:flex items-center gap-3">
-            <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg overflow-hidden p-1">
-              <img src="/uroll-logo.jpg" alt="HTU" className="w-10 h-10 object-contain" />
+            <div className="w-12 h-12 bg-white rounded-xl shadow-lg overflow-hidden">
+              <img src="/uroll-logo.jpg" alt="HTU" className="w-full h-full object-cover" />
             </div>
             <div>
               <h1 className="font-extrabold text-white leading-tight">HTU</h1>
