@@ -80,7 +80,7 @@ export default function LecturerDashboard() {
             <BookOpen className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-blue-100">My Courses</p>
+            <p className="text-sm font-semibold text-blue-100">My Course</p>
             <p className="text-3.5xl font-extrabold text-white mt-0.5 drop-shadow-sm">{isLoading ? "—" : courses.length}</p>
           </div>
         </div>
@@ -113,10 +113,7 @@ export default function LecturerDashboard() {
       {/* Courses */}
       <div className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-xl overflow-hidden text-white">
         <div className="p-6 border-b border-white/10 flex items-center justify-between">
-          <h2 className="text-xl font-bold text-white">My Courses</h2>
-          <Link href="/lecturer/courses" className="text-sm font-bold text-blue-100 hover:text-white transition-colors">
-            View All →
-          </Link>
+          <h2 className="text-xl font-bold text-white">My Course</h2>
         </div>
 
         {isLoading ? (

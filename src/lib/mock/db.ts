@@ -2,12 +2,14 @@ export type Role = 'student' | 'lecturer' | 'admin' | 'course_rep';
 
 export interface User {
   id: string;
-  studentId?: string; // For students
+  studentId?: string;   // For students
+  indexNumber?: string; // For students
+  courseCode?: string;  // For lecturers
   fullName: string;
   email: string;
   department: string;
-  level?: string; // For students
-  deviceId?: string; // For device verification
+  level?: string;       // For students
+  deviceId?: string;    // For device verification
   role: Role;
 }
 

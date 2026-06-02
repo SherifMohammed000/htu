@@ -66,12 +66,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (identifier: string, password: string) => {
     setIsLoading(true);
     try {
-      // Check if the identifier is a course code (like CS301, MATH201, ENG101)
-      const isCourseCode = /^[A-Z]{2,5}\d{3,4}$/i.test(identifier.trim());
+      // Check if the identifier is a course code (like CS301, MATH201, ENG101) after stripping all spaces
+      const cleanIdentifier = identifier.replace(/\s+/g, "");
+      const isCourseCode = /^[A-Z]{2,5}\d{3,4}$/i.test(cleanIdentifier);
       const email = identifier.includes('@')
         ? identifier
         : isCourseCode
-          ? `${identifier.trim().toUpperCase()}@lecturer.htu.edu`
+          ? `${cleanIdentifier.toUpperCase()}@lecturer.htu.edu`
           : `${identifier.trim()}@student.htu.edu`;
       
       await signInWithEmailAndPassword(auth, email, password);
@@ -106,7 +107,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const registerLecturer = async (courseCode: string, fullName: string, password: string, ipAddress: string) => {
     setIsLoading(true);
     try {
-      const formattedCode = courseCode.trim().toUpperCase();
+      const formattedCode = courseCode.replace(/\s+/g, "").toUpperCase();
       const email = `${formattedCode}@lecturer.htu.edu`;
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       

@@ -311,7 +311,7 @@ export default function CourseSession({ params }: { params: Promise<{ id: string
             {/* Real QR Code */}
             <div className="bg-white p-5 rounded-2xl shadow-xl border border-white/20 mb-6">
               <QRCode
-                value={JSON.stringify({ sessionId: activeSession.id, token: qrToken, ts: Date.now() })}
+                value={JSON.stringify({ sessionId: activeSession.id, token: qrToken })}
                 size={220}
                 level="H"
                 includeMargin

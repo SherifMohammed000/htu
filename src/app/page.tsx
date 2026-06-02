@@ -122,43 +122,42 @@ export default function Home() {
   }, [user, isLoading, router, showSplash]);
 
   useEffect(() => {
-    if (mode === "activate-step-1") {
-      const fetchAutocompleteData = async () => {
-        try {
-          const [studentsSnap, coursesSnap, usersSnap] = await Promise.all([
-            getDocs(collection(db, "students")),
-            getDocs(collection(db, "courses")),
-            getDocs(query(collection(db, "users"), where("role", "==", "lecturer"))),
-          ]);
-          
-          const studentsData = studentsSnap.docs.map(doc => ({
-            name: doc.data().name,
-            indexNumber: doc.data().indexNumber,
-            type: "student"
-          }));
-          
-          const lecturerMap: Record<string, string> = {};
-          usersSnap.docs.forEach(doc => {
-            lecturerMap[doc.id] = doc.data().fullName;
-          });
-          
-          const coursesData = coursesSnap.docs.map(doc => {
-            const data = doc.data();
-            return {
-              name: lecturerMap[data.lecturerId] || "Unknown Lecturer",
-              indexNumber: data.courseCode,
-              type: "lecturer"
-            };
-          });
-          
-          setAllStudents([...studentsData, ...coursesData]);
-        } catch (e) {
-          console.error("Failed to fetch autocomplete data", e);
-        }
-      };
-      fetchAutocompleteData();
-    }
-  }, [mode]);
+    const fetchAutocompleteData = async () => {
+      try {
+        const [studentsSnap, coursesSnap, usersSnap] = await Promise.all([
+          getDocs(collection(db, "students")),
+          getDocs(collection(db, "courses")),
+          getDocs(query(collection(db, "users"), where("role", "==", "lecturer"))),
+        ]);
+        
+        const studentsData = studentsSnap.docs.map(doc => ({
+          name: doc.data().name,
+          indexNumber: doc.data().indexNumber,
+          type: "student"
+        }));
+        
+        const lecturerMap: Record<string, string> = {};
+        usersSnap.docs.forEach(doc => {
+          lecturerMap[doc.id] = doc.data().fullName;
+        });
+        
+        const coursesData = coursesSnap.docs.map(doc => {
+          const data = doc.data();
+          const code = data.courseCode || doc.id;
+          return {
+            name: lecturerMap[data.lecturerId] || data.lecturerName || data.courseName || data.name || code,
+            indexNumber: code,
+            type: "lecturer"
+          };
+        });
+        
+        setAllStudents([...studentsData, ...coursesData]);
+      } catch (e) {
+        console.error("Failed to fetch autocomplete data", e);
+      }
+    };
+    fetchAutocompleteData();
+  }, []);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -209,7 +208,7 @@ export default function Home() {
     setIsSubmitting(true);
     
     try {
-      const matched = allStudents.find(s => s.indexNumber.trim().toUpperCase() === identifier.trim().toUpperCase());
+      const matched = allStudents.find(s => (s.indexNumber || "").replace(/\s+/g, "").toUpperCase() === identifier.replace(/\s+/g, "").toUpperCase());
       if (!matched) {
         setError("No record found with this ID.");
         setIsSubmitting(false);
@@ -264,7 +263,7 @@ export default function Home() {
         return;
       }
       
-      const matched = allStudents.find(s => s.indexNumber.trim().toUpperCase() === identifier.trim().toUpperCase());
+      const matched = allStudents.find(s => (s.indexNumber || "").replace(/\s+/g, "").toUpperCase() === identifier.replace(/\s+/g, "").toUpperCase());
       if (matched && matched.type === "lecturer") {
         await registerLecturer(identifier, fullName, password, ip);
       } else {
@@ -340,7 +339,7 @@ export default function Home() {
           </div>
           <h1 className="text-5xl font-extrabold mb-4 tracking-tight drop-shadow-md">HTU Attendance</h1>
           <p className="text-blue-100 text-xl mb-12 max-w-sm mx-auto leading-relaxed font-medium">
-            Smart, secure, and automatic attendance tracking for modern universities.
+            Smart, secure, and automatic attendance tracking.
           </p>
           <div className="grid grid-cols-2 gap-4 text-left max-w-sm mx-auto">
             {[
@@ -511,14 +510,14 @@ export default function Home() {
                     onChange={(e) => {
                       const val = e.target.value;
                       setIdentifier(val);
-                      const match = allStudents.find(s => s.indexNumber.trim().toUpperCase() === val.trim().toUpperCase());
+                      const match = allStudents.find(s => (s.indexNumber || "").replace(/\s+/g, "").toUpperCase() === val.replace(/\s+/g, "").toUpperCase());
                       if (match) {
                         setFullName(match.name);
                         setShowSuggestions(false);
                       }
                     }}
                     onBlur={() => {
-                      const match = allStudents.find(s => s.indexNumber.trim().toUpperCase() === identifier.trim().toUpperCase());
+                      const match = allStudents.find(s => (s.indexNumber || "").replace(/\s+/g, "").toUpperCase() === identifier.replace(/\s+/g, "").toUpperCase());
                       if (match) {
                         setFullName(match.name);
                       }

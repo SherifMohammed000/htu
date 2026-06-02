@@ -1,0 +1,30 @@
+[
+  {
+    "courseCode": "BICT202",
+    "lecturerName": "Mr. A. Sackey"
+  },
+  {
+    "courseCode": "BICT204",
+    "lecturerName": "Mr. Victor W. Gbedawo"
+  },
+  {
+    "courseCode": "BICT206",
+    "lecturerName": "Dr. Victor K. Agbesi"
+  },
+  {
+    "courseCode": "BICT208",
+    "lecturerName": "Mr. M. Agbenorto"
+  },
+  {
+    "courseCode": "BICT210",
+    "lecturerName": "Mr. Prince Modey"
+  },
+  {
+    "courseCode": "BICT212",
+    "lecturerName": "Mr. A. Asiedu"
+  },
+  {
+    "courseCode": "BICT214",
+    "lecturerName": "Dr. M. Boakye Yiadom"
+  }
+]

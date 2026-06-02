@@ -32,7 +32,6 @@ export default function LecturerLayout({
 
   const navLinks = [
     { href: "/lecturer/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/lecturer/courses", label: "My Courses", icon: BookOpen },
     { href: "/lecturer/students", label: "Students", icon: Users },
     { href: "/lecturer/settings", label: "Settings", icon: Settings },
   ];

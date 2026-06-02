@@ -373,8 +373,7 @@ function StartSessionContent() {
               <QRCode
                 value={JSON.stringify({
                   sessionId: activeSession.id,
-                  token: qrToken,
-                  ts: Date.now(),
+                  token: qrToken
                 })}
                 size={220}
                 level="H"
