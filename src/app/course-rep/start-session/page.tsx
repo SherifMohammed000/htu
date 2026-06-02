@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { QRCodeSVG as QRCode } from "qrcode.react";
+import LocationMap from "@/components/LocationMap";
 import { useSearchParams } from "next/navigation";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
@@ -424,16 +425,9 @@ function StartSessionContent() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 p-3 bg-white/5 border border-white/10 rounded-xl">
-                <div className="p-2 bg-white/10 border border-white/10 text-white rounded-lg">
-                  <MapPin className="w-4 h-4" />
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-white">
-                    Geofencing Active
-                  </p>
-                  <p className="text-xs text-blue-200 font-semibold mt-0.5">30-meter radius</p>
-                </div>
+              {/* Map displaying classroom location */}
+              <div className="mt-4 h-48 w-full rounded-xl overflow-hidden border border-white/10">
+                <LocationMap lat={activeSession.location.lat} lng={activeSession.location.lng} />
               </div>
             </div>
 
