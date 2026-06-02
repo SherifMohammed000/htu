@@ -517,6 +517,12 @@ export default function Home() {
                         setShowSuggestions(false);
                       }
                     }}
+                    onBlur={() => {
+                      const match = allStudents.find(s => s.indexNumber.trim().toUpperCase() === identifier.trim().toUpperCase());
+                      if (match) {
+                        setFullName(match.name);
+                      }
+                    }}
                     className="block w-full rounded-xl border border-white/20 px-4 py-3 text-white bg-black/20 placeholder-white/50 focus:border-white focus:outline-none focus:ring-2 focus:ring-white/30 transition-all font-semibold"
                     placeholder="e.g. 0324080252 or CS301"
                   />
