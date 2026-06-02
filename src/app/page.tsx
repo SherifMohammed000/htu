@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
-import { LogIn, Eye, EyeOff, UserPlus, ArrowRight, ShieldCheck, Download } from "lucide-react";
+import { LogIn, Eye, EyeOff, UserPlus, ArrowRight, ShieldCheck, Download, X, Share, MoreVertical, PlusSquare } from "lucide-react";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
 
@@ -11,6 +11,7 @@ export default function Home() {
   const { user, login, registerStudent, isLoading } = useAuth();
   const router = useRouter();
   
+  const [showSplash, setShowSplash] = useState(true);
   const [mode, setMode] = useState<"login" | "activate-step-1" | "activate-step-2">("login");
   
   const [identifier, setIdentifier] = useState("");
@@ -27,40 +28,96 @@ export default function Home() {
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [showIOSModal, setShowIOSModal] = useState(false);
+  const [isInstalled, setIsInstalled] = useState(false);
+
+  // Platform detection
+  const getIsIOS = () => {
+    if (typeof navigator === "undefined") return false;
+    return /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+      (navigator.userAgent.includes("Mac") && "ontouchend" in document);
+  };
+
+  const getIsAndroid = () => {
+    if (typeof navigator === "undefined") return false;
+    return /Android/.test(navigator.userAgent);
+  };
+
+  const getIsStandalone = () => {
+    if (typeof window === "undefined") return false;
+    return window.matchMedia("(display-mode: standalone)").matches ||
+      (window.navigator as any).standalone === true;
+  };
 
   useEffect(() => {
+    setIsInstalled(getIsStandalone());
+
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e);
     };
 
+    const handleAppInstalled = () => {
+      setIsInstalled(true);
+      setDeferredPrompt(null);
+    };
+
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', handleAppInstalled);
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
     };
   }, []);
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowSplash(false);
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, []);
+
   const handleInstallClick = async () => {
+    // Already installed
+    if (isInstalled) return;
+
+    // Android / Desktop Chrome — native prompt available
     if (deferredPrompt) {
       deferredPrompt.prompt();
       const { outcome } = await deferredPrompt.userChoice;
       if (outcome === 'accepted') {
         setDeferredPrompt(null);
+        setIsInstalled(true);
       }
-    } else {
-      alert("To install this app, tap the Share icon (iOS) or Menu icon (Android) and select 'Add to Home Screen'. On desktop, look for the install icon in your browser's address bar.");
+      return;
     }
+
+    // iOS — show instruction modal
+    if (getIsIOS()) {
+      setShowIOSModal(true);
+      return;
+    }
+
+    // Fallback for other browsers — show iOS modal with generic instructions
+    setShowIOSModal(true);
+  };
+
+  const getInstallButtonLabel = () => {
+    if (isInstalled) return "App Installed ✓";
+    if (getIsIOS()) return "Install on iPhone";
+    if (getIsAndroid()) return "Install App";
+    return "Install App";
   };
 
   useEffect(() => {
-    if (!isLoading && user) {
+    if (!showSplash && !isLoading && user) {
       if (user.role === "lecturer") router.push("/lecturer/dashboard");
       else if (user.role === "student") router.push("/student/dashboard");
       else if (user.role === "course_rep") router.push("/course-rep/dashboard");
       else if (user.role === "admin") router.push("/admin/dashboard");
     }
-  }, [user, isLoading, router]);
+  }, [user, isLoading, router, showSplash]);
 
   useEffect(() => {
     if (mode === "activate-step-1") {
@@ -203,6 +260,37 @@ export default function Home() {
     return typedParts.every((part: string) => actualLower.includes(part));
   });
 
+  if (showSplash) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-sky-400 via-blue-700 to-red-600 relative overflow-hidden text-white">
+        {/* Animated background blobs */}
+        <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-white/10 rounded-full blur-[120px] pointer-events-none -translate-x-1/2 -translate-y-1/2 animate-pulse" />
+        <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-red-500/30 rounded-full blur-[150px] pointer-events-none translate-x-1/3 translate-y-1/3 animate-pulse" />
+        
+        <div className="flex flex-col items-center max-w-sm px-4 text-center z-10 animate-in fade-in zoom-in-95 duration-700">
+          <div className="w-36 h-36 bg-white rounded-full flex items-center justify-center shadow-2xl overflow-hidden p-2.5 animate-bounce mb-8 border-4 border-white/50">
+            <img src="/htu-logo.png" alt="HTU Logo" className="w-28 h-28 object-contain" />
+          </div>
+          
+          <h1 className="text-4xl font-extrabold tracking-tight drop-shadow-lg mb-2">
+            HTU Attendance
+          </h1>
+          <p className="text-blue-100 text-sm font-bold tracking-widest uppercase mb-12">
+            Smart Portal
+          </p>
+
+          {/* Elegant 5-second progress bar */}
+          <div className="w-64 h-2 bg-white/20 rounded-full overflow-hidden border border-white/10 p-[1px] mb-4">
+            <div className="h-full bg-white rounded-full animate-progress" />
+          </div>
+          <p className="text-xs text-blue-200 font-bold tracking-wide animate-pulse">
+            Securing Connection...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   if (isLoading || user) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-slate-900 flex-col gap-4">
@@ -242,10 +330,15 @@ export default function Home() {
           
           <div className="mt-10 max-w-sm mx-auto">
             <button 
-              onClick={handleInstallClick} 
-              className="w-full py-4 px-6 bg-white/20 hover:bg-white/30 text-white border-2 border-white/40 rounded-2xl font-bold flex items-center justify-center gap-3 transition-all backdrop-blur-md shadow-[0_4px_14px_0_rgba(255,255,255,0.15)] hover:scale-105 active:scale-95"
+              onClick={handleInstallClick}
+              disabled={isInstalled}
+              className={`w-full py-4 px-6 border-2 rounded-2xl font-bold flex items-center justify-center gap-3 transition-all backdrop-blur-md shadow-[0_4px_14px_0_rgba(255,255,255,0.15)] ${
+                isInstalled
+                  ? "bg-white/10 border-white/20 text-white/60 cursor-default"
+                  : "bg-white/20 hover:bg-white/30 text-white border-white/40 hover:scale-105 active:scale-95"
+              }`}
             >
-              <Download className="w-6 h-6" /> Install Desktop App
+              <Download className="w-6 h-6" /> {getInstallButtonLabel()}
             </button>
           </div>
         </div>
@@ -262,10 +355,15 @@ export default function Home() {
               <p className="text-sm text-blue-100 font-medium mt-1">Smart tracking portal</p>
             </div>
             <button 
-              onClick={handleInstallClick} 
-              className="mt-2 px-6 py-3 w-full bg-white/20 hover:bg-white/30 text-white border-2 border-white/40 rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg text-sm hover:scale-105 active:scale-95"
+              onClick={handleInstallClick}
+              disabled={isInstalled}
+              className={`mt-2 px-6 py-3 w-full border-2 rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg text-sm ${
+                isInstalled
+                  ? "bg-white/10 border-white/20 text-white/60 cursor-default"
+                  : "bg-white/20 hover:bg-white/30 text-white border-white/40 hover:scale-105 active:scale-95"
+              }`}
             >
-              <Download className="w-5 h-5" /> Install Mobile App
+              <Download className="w-5 h-5" /> {getInstallButtonLabel()}
             </button>
           </div>
 
@@ -570,6 +668,107 @@ export default function Home() {
           )}
         </div>
       </div>
+
+      {/* iOS Install Instructions Modal */}
+      {showIOSModal && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="bg-gradient-to-br from-sky-400 via-blue-700 to-red-600 rounded-t-3xl sm:rounded-3xl border border-white/20 shadow-2xl w-full max-w-md p-6 sm:p-8 text-white relative animate-in slide-in-from-bottom-8 sm:zoom-in-95 duration-300">
+            <button
+              onClick={() => setShowIOSModal(false)}
+              className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors border border-white/10"
+            >
+              <X className="w-5 h-5 text-white" />
+            </button>
+
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg overflow-hidden p-1.5">
+                <img src="/htu-logo.png" alt="HTU" className="w-12 h-12 object-contain" />
+              </div>
+              <h3 className="text-2xl font-extrabold drop-shadow-md">Install HTU Attendance</h3>
+              <p className="text-blue-100 text-sm mt-1 font-medium">Add the app to your home screen</p>
+            </div>
+
+            {getIsIOS() ? (
+              <div className="space-y-4">
+                <p className="text-xs text-blue-200 font-bold uppercase tracking-wider text-center">Follow these steps in Safari</p>
+                
+                <div className="space-y-3">
+                  <div className="flex items-start gap-4 bg-white/10 rounded-2xl p-4 border border-white/10">
+                    <div className="w-8 h-8 bg-white text-blue-900 rounded-full flex items-center justify-center font-extrabold text-sm shrink-0">1</div>
+                    <div>
+                      <p className="font-bold text-white text-sm">Tap the Share button</p>
+                      <p className="text-blue-100 text-xs mt-0.5 flex items-center gap-1">
+                        Look for the <Share className="w-3.5 h-3.5 inline" /> icon at the bottom of Safari
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-4 bg-white/10 rounded-2xl p-4 border border-white/10">
+                    <div className="w-8 h-8 bg-white text-blue-900 rounded-full flex items-center justify-center font-extrabold text-sm shrink-0">2</div>
+                    <div>
+                      <p className="font-bold text-white text-sm">Scroll down and tap</p>
+                      <p className="text-blue-100 text-xs mt-0.5 flex items-center gap-1">
+                        <PlusSquare className="w-3.5 h-3.5 inline" /> <strong>&quot;Add to Home Screen&quot;</strong>
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-4 bg-white/10 rounded-2xl p-4 border border-white/10">
+                    <div className="w-8 h-8 bg-white text-blue-900 rounded-full flex items-center justify-center font-extrabold text-sm shrink-0">3</div>
+                    <div>
+                      <p className="font-bold text-white text-sm">Tap &quot;Add&quot;</p>
+                      <p className="text-blue-100 text-xs mt-0.5">The app will appear on your home screen like a native app</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white/5 border border-white/10 rounded-xl p-3 mt-2">
+                  <p className="text-xs text-blue-200 text-center font-semibold">⚠️ Make sure you&apos;re using <strong>Safari</strong> — this won&apos;t work in Chrome or other iOS browsers</p>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <p className="text-xs text-blue-200 font-bold uppercase tracking-wider text-center">Install from your browser</p>
+                
+                <div className="space-y-3">
+                  <div className="flex items-start gap-4 bg-white/10 rounded-2xl p-4 border border-white/10">
+                    <div className="w-8 h-8 bg-white text-blue-900 rounded-full flex items-center justify-center font-extrabold text-sm shrink-0">1</div>
+                    <div>
+                      <p className="font-bold text-white text-sm">Tap the menu button</p>
+                      <p className="text-blue-100 text-xs mt-0.5 flex items-center gap-1">
+                        Look for <MoreVertical className="w-3.5 h-3.5 inline" /> (three dots) in your browser
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-4 bg-white/10 rounded-2xl p-4 border border-white/10">
+                    <div className="w-8 h-8 bg-white text-blue-900 rounded-full flex items-center justify-center font-extrabold text-sm shrink-0">2</div>
+                    <div>
+                      <p className="font-bold text-white text-sm">Select &quot;Add to Home Screen&quot;</p>
+                      <p className="text-blue-100 text-xs mt-0.5">or &quot;Install App&quot; if available</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-4 bg-white/10 rounded-2xl p-4 border border-white/10">
+                    <div className="w-8 h-8 bg-white text-blue-900 rounded-full flex items-center justify-center font-extrabold text-sm shrink-0">3</div>
+                    <div>
+                      <p className="font-bold text-white text-sm">Confirm installation</p>
+                      <p className="text-blue-100 text-xs mt-0.5">The app will appear on your home screen</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <button
+              onClick={() => setShowIOSModal(false)}
+              className="w-full mt-6 py-3.5 bg-white text-blue-900 rounded-xl font-bold transition-all hover:bg-blue-50 hover:scale-[1.02] active:scale-[0.98] shadow-md"
+            >
+              Got it
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
