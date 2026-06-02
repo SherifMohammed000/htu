@@ -355,19 +355,16 @@ export default function Home() {
             ))}
           </div>
           
-          <div className="mt-10 max-w-sm mx-auto">
-            <button 
-              onClick={handleInstallClick}
-              disabled={isInstalled}
-              className={`w-full py-4 px-6 border-2 rounded-2xl font-bold flex items-center justify-center gap-3 transition-all backdrop-blur-md shadow-[0_4px_14px_0_rgba(255,255,255,0.15)] ${
-                isInstalled
-                  ? "bg-white/10 border-white/20 text-white/60 cursor-default"
-                  : "bg-white/20 hover:bg-white/30 text-white border-white/40 hover:scale-105 active:scale-95"
-              }`}
-            >
-              <Download className="w-6 h-6" /> {getInstallButtonLabel()}
-            </button>
-          </div>
+          {!isInstalled && (
+            <div className="mt-10 max-w-sm mx-auto">
+              <button 
+                onClick={handleInstallClick}
+                className="w-full py-4 px-6 border-2 rounded-2xl font-bold flex items-center justify-center gap-3 transition-all backdrop-blur-md shadow-[0_4px_14px_0_rgba(255,255,255,0.15)] bg-white/20 hover:bg-white/30 text-white border-white/40 hover:scale-105 active:scale-95"
+              >
+                <Download className="w-6 h-6" /> Install App
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -381,17 +378,14 @@ export default function Home() {
               <h1 className="text-3xl font-extrabold tracking-tight drop-shadow-md">HTU Attendance</h1>
               <p className="text-sm text-blue-100 font-medium mt-1">Smart tracking portal</p>
             </div>
-            <button 
-              onClick={handleInstallClick}
-              disabled={isInstalled}
-              className={`mt-2 px-6 py-3 w-full border-2 rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg text-sm ${
-                isInstalled
-                  ? "bg-white/10 border-white/20 text-white/60 cursor-default"
-                  : "bg-white/20 hover:bg-white/30 text-white border-white/40 hover:scale-105 active:scale-95"
-              }`}
-            >
-              <Download className="w-5 h-5" /> {getInstallButtonLabel()}
-            </button>
+            {!isInstalled && (
+              <button 
+                onClick={handleInstallClick}
+                className="mt-2 px-6 py-3 w-full border-2 rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg text-sm bg-white/20 hover:bg-white/30 text-white border-white/40 hover:scale-105 active:scale-95"
+              >
+                <Download className="w-5 h-5" /> Install App
+              </button>
+            )}
           </div>
 
           {/* LOGIN MODE */}

@@ -88,13 +88,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const email = `${indexNumber}@student.htu.edu`;
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       
+      const reps = ["0324080539", "0324080114"];
+      const role = reps.includes(indexNumber.replace(/\s+/g, "")) ? "course_rep" : "student";
+
       // Create user profile in Firestore
       await setDoc(doc(db, 'users', userCredential.user.uid), {
         id: userCredential.user.uid,
         indexNumber,
         fullName,
         email,
-        role: 'student',
+        role: role,
         ipAddress,
         createdAt: new Date().toISOString()
       });
