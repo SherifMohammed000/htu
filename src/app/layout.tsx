@@ -6,6 +6,10 @@ export const metadata: Metadata = {
   title: "HTU Attendance System",
   description: "Modern University Attendance Management System",
   manifest: "/manifest.json",
+  icons: {
+    icon: "/uroll-logo.jpg",
+    apple: "/uroll-logo.jpg",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
