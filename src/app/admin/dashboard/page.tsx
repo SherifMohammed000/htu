@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getUsersByRole, getLecturerCourses } from "@/lib/firebase/firestore";
-import { collection, getDocs, query, where, orderBy, limit, doc, updateDoc } from "firebase/firestore";
+import { getUsersByRole } from "@/lib/firebase/firestore";
+import { collection, getDocs, query, orderBy, limit, doc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
 import { User, Course, AttendanceRecord } from "@/lib/mock/db";
-import { Users, BookOpen, ClipboardList, TrendingUp, ShieldCheck, Clock, CheckCircle2, Crown, Search, ArrowUpDown } from "lucide-react";
+import { Users, BookOpen, ClipboardList, TrendingUp, ShieldCheck, Clock, CheckCircle2, Crown, Search } from "lucide-react";
 import { format } from "date-fns";
 
 export default function AdminDashboard() {
@@ -55,7 +55,6 @@ export default function AdminDashboard() {
     try {
       const newRole = currentRole === "course_rep" ? "student" : "course_rep";
       await updateDoc(doc(db, "users", userId), { role: newRole });
-      // Refresh data
       await loadData();
     } catch (err) {
       console.error("Failed to update role:", err);
@@ -73,37 +72,33 @@ export default function AdminDashboard() {
   );
 
   const statCards = [
-    { label: "Students", value: students.length, icon: Users, color: "blue" },
-    { label: "Course Reps", value: courseReps.length, icon: Crown, color: "teal" },
-    { label: "Lecturers", value: lecturers.length, icon: ShieldCheck, color: "red" },
-    { label: "Courses", value: courses.length, icon: BookOpen, color: "blue" },
-    { label: "Total Sessions", value: sessionCount, icon: ClipboardList, color: "red" },
+    { label: "Students", value: students.length, icon: Users },
+    { label: "Course Reps", value: courseReps.length, icon: Crown },
+    { label: "Lecturers", value: lecturers.length, icon: ShieldCheck },
+    { label: "Courses", value: courses.length, icon: BookOpen },
+    { label: "Total Sessions", value: sessionCount, icon: ClipboardList },
   ];
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 text-white">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Admin Dashboard</h1>
-        <p className="text-slate-500 dark:text-slate-400 mt-1">System-wide overview and management.</p>
+        <h1 className="text-3xl font-extrabold tracking-tight text-white drop-shadow-md">Admin Dashboard</h1>
+        <p className="text-blue-100 mt-1 font-medium">System-wide overview and management.</p>
       </div>
 
       {/* Stat cards */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        {statCards.map(({ label, value, icon: Icon, color }) => (
-          <div key={label} className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-100 dark:border-slate-700 shadow-sm flex flex-col gap-3">
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-              color === "blue" ? "bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400" 
-              : color === "teal" ? "bg-teal-50 text-teal-600 dark:bg-teal-900/30 dark:text-teal-400"
-              : "bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400"
-            }`}>
+        {statCards.map(({ label, value, icon: Icon }) => (
+          <div key={label} className="bg-white/10 backdrop-blur-md rounded-2xl p-5 border border-white/20 shadow-xl flex flex-col gap-3">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-white/15 text-white border border-white/10 shrink-0">
               <Icon className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-3xl font-bold text-slate-900 dark:text-white">
+              <p className="text-3xl font-extrabold text-white drop-shadow-sm">
                 {isLoading ? "—" : value}
               </p>
-              <p className="text-xs text-slate-500 font-medium mt-0.5">{label}</p>
+              <p className="text-xs text-blue-100 font-bold mt-0.5 uppercase tracking-wide">{label}</p>
             </div>
           </div>
         ))}
@@ -111,26 +106,26 @@ export default function AdminDashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Lecturers */}
-        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm overflow-hidden">
-          <div className="p-5 border-b border-slate-100 dark:border-slate-700">
-            <h2 className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <ShieldCheck className="w-5 h-5 text-blue-600" /> Lecturers
+        <div className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-xl overflow-hidden">
+          <div className="p-5 border-b border-white/10">
+            <h2 className="font-bold text-white flex items-center gap-2">
+              <ShieldCheck className="w-5 h-5 text-white" /> Lecturers
             </h2>
           </div>
           {isLoading ? (
-            <div className="p-8 flex justify-center"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-red-600" /></div>
+            <div className="p-12 flex justify-center"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white" /></div>
           ) : lecturers.length === 0 ? (
-            <p className="p-6 text-slate-400 text-sm text-center">No lecturers registered yet.</p>
+            <p className="p-6 text-blue-200 text-sm text-center">No lecturers registered yet.</p>
           ) : (
-            <div className="divide-y divide-slate-100 dark:divide-slate-700">
+            <div className="divide-y divide-white/10">
               {lecturers.map((l) => (
-                <div key={l.id} className="p-4 flex items-center gap-3 hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
-                  <div className="w-9 h-9 rounded-full bg-blue-700 flex items-center justify-center text-white font-bold text-sm shrink-0">
+                <div key={l.id} className="p-4 flex items-center gap-3 hover:bg-white/5 transition-colors">
+                  <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center text-white font-bold text-sm shrink-0 border border-white/10">
                     {l.fullName.charAt(0)}
                   </div>
                   <div className="overflow-hidden">
-                    <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{l.fullName}</p>
-                    <p className="text-xs text-slate-500 truncate">{l.department}</p>
+                    <p className="text-sm font-bold text-white truncate">{l.fullName}</p>
+                    <p className="text-xs text-blue-100 font-semibold mt-0.5 truncate">{l.department}</p>
                   </div>
                 </div>
               ))}
@@ -139,24 +134,24 @@ export default function AdminDashboard() {
         </div>
 
         {/* Courses */}
-        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm overflow-hidden">
-          <div className="p-5 border-b border-slate-100 dark:border-slate-700">
-            <h2 className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <BookOpen className="w-5 h-5 text-red-600" /> Courses
+        <div className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-xl overflow-hidden">
+          <div className="p-5 border-b border-white/10">
+            <h2 className="font-bold text-white flex items-center gap-2">
+              <BookOpen className="w-5 h-5 text-white" /> Courses
             </h2>
           </div>
           {isLoading ? (
-            <div className="p-8 flex justify-center"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-red-600" /></div>
+            <div className="p-12 flex justify-center"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white" /></div>
           ) : courses.length === 0 ? (
-            <p className="p-6 text-slate-400 text-sm text-center">No courses created yet.</p>
+            <p className="p-6 text-blue-200 text-sm text-center">No courses created yet.</p>
           ) : (
-            <div className="divide-y divide-slate-100 dark:divide-slate-700">
+            <div className="divide-y divide-white/10">
               {courses.map((c) => (
-                <div key={c.id} className="p-4 flex items-center gap-3 hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
-                  <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-blue-50 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 shrink-0">
+                <div key={c.id} className="p-4 flex items-center gap-3 hover:bg-white/5 transition-colors">
+                  <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-white/20 text-white border border-white/10 shrink-0">
                     {c.courseCode}
                   </span>
-                  <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{c.courseName}</p>
+                  <p className="text-sm font-bold text-white truncate">{c.courseName}</p>
                 </div>
               ))}
             </div>
@@ -165,34 +160,34 @@ export default function AdminDashboard() {
       </div>
 
       {/* Recent Attendance */}
-      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm overflow-hidden">
-        <div className="p-5 border-b border-slate-100 dark:border-slate-700">
-          <h2 className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-red-600" /> Recent Attendance Activity
+      <div className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-xl overflow-hidden">
+        <div className="p-5 border-b border-white/10">
+          <h2 className="font-bold text-white flex items-center gap-2">
+            <TrendingUp className="w-5 h-5 text-white" /> Recent Attendance Activity
           </h2>
         </div>
         {isLoading ? (
-          <div className="p-8 flex justify-center"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-red-600" /></div>
+          <div className="p-12 flex justify-center"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white" /></div>
         ) : recentRecords.length === 0 ? (
-          <p className="p-8 text-slate-400 text-sm text-center">No attendance records yet.</p>
+          <p className="p-8 text-blue-200 text-sm text-center">No attendance records yet.</p>
         ) : (
-          <div className="divide-y divide-slate-100 dark:divide-slate-700">
+          <div className="divide-y divide-white/10">
             {recentRecords.map((r) => (
-              <div key={r.id} className="p-4 flex items-center gap-4 hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
-                <div className={`p-2 rounded-lg shrink-0 ${r.status === "present" ? "bg-blue-50 text-blue-600" : "bg-slate-100 text-slate-400"}`}>
+              <div key={r.id} className="p-4 flex items-center gap-4 hover:bg-white/5 transition-colors">
+                <div className={`p-2 rounded-lg shrink-0 ${r.status === "present" ? "bg-white/20 text-white" : "bg-white/5 text-white/40"}`}>
                   {r.status === "present" ? <CheckCircle2 className="w-4 h-4" /> : <Clock className="w-4 h-4" />}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
-                    Student: <span className="font-mono text-xs">{r.studentId}</span>
+                  <p className="text-sm font-bold text-white truncate">
+                    Student: <span className="font-mono text-xs text-blue-100 bg-white/10 px-1.5 py-0.5 rounded">{r.studentId}</span>
                   </p>
-                  <p className="text-xs text-slate-500">Session: {r.sessionId.substring(0, 12)}...</p>
+                  <p className="text-xs text-blue-100 mt-1 font-semibold">Session: {r.sessionId.substring(0, 12)}...</p>
                 </div>
                 <div className="shrink-0 text-right">
-                  <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${r.status === "present" ? "bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300" : "bg-slate-100 text-slate-500"}`}>
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${r.status === "present" ? "bg-white/20 text-white border border-white/10" : "bg-white/5 text-white/50"}`}>
                     {r.status}
                   </span>
-                  <p className="text-xs text-slate-400 mt-1">
+                  <p className="text-xs text-blue-100 font-semibold mt-1.5">
                     {format(new Date(r.timestamp), "MMM d, h:mm a")}
                   </p>
                 </div>
@@ -203,53 +198,53 @@ export default function AdminDashboard() {
       </div>
 
       {/* Students & Course Rep Management */}
-      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm overflow-hidden">
-        <div className="p-5 border-b border-slate-100 dark:border-slate-700">
+      <div className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-xl overflow-hidden">
+        <div className="p-5 border-b border-white/10">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <h2 className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <Users className="w-5 h-5 text-blue-600" /> Students & Course Reps ({filteredStudents.length})
+            <h2 className="font-bold text-white flex items-center gap-2">
+              <Users className="w-5 h-5 text-white" /> Students & Course Reps ({filteredStudents.length})
             </h2>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-100" />
               <input
                 type="text"
                 value={studentSearch}
                 onChange={(e) => setStudentSearch(e.target.value)}
                 placeholder="Search students..."
-                className="pl-9 pr-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-900 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 w-full sm:w-64"
+                className="pl-9 pr-4 py-2 rounded-xl border border-white/25 bg-white/5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-white focus:ring-2 focus:ring-white/15 w-full sm:w-64 transition-all"
               />
             </div>
           </div>
         </div>
         {isLoading ? (
-          <div className="p-8 flex justify-center"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-red-600" /></div>
+          <div className="p-12 flex justify-center"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white" /></div>
         ) : filteredStudents.length === 0 ? (
-          <p className="p-6 text-slate-400 text-sm text-center">No students found.</p>
+          <p className="p-6 text-blue-200 text-sm text-center">No students found.</p>
         ) : (
-          <div className="divide-y divide-slate-100 dark:divide-slate-700 max-h-[500px] overflow-y-auto">
+          <div className="divide-y divide-white/10 max-h-[500px] overflow-y-auto">
             {filteredStudents.map((s) => {
               const isRep = s.role === "course_rep";
               const indexNum = s.studentId || (s as any).indexNumber || "";
               return (
-                <div key={s.id} className="p-4 flex items-center gap-3 hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
+                <div key={s.id} className="p-4 flex items-center gap-3 hover:bg-white/5 transition-colors">
                   <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm shrink-0 ${
                     isRep 
-                      ? "bg-teal-600 text-white" 
-                      : "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300"
+                      ? "bg-white text-blue-900" 
+                      : "bg-white/10 text-white border border-white/10"
                   }`}>
                     {s.fullName.charAt(0)}
                   </div>
                   <div className="flex-1 overflow-hidden">
                     <div className="flex items-center gap-2">
-                      <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{s.fullName}</p>
+                      <p className="text-sm font-bold text-white truncate">{s.fullName}</p>
                       {isRep && (
-                        <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-teal-100 text-teal-800 dark:bg-teal-900/40 dark:text-teal-300 shrink-0">
+                        <span className="px-2 py-0.5 rounded-full text-xs font-extrabold bg-white text-blue-950 shrink-0">
                           REP
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-slate-500 truncate">
-                      {indexNum && <span className="font-mono font-semibold">{indexNum}</span>}
+                    <p className="text-xs text-blue-100 font-semibold mt-0.5 truncate">
+                      {indexNum && <span className="font-mono">{indexNum}</span>}
                       {indexNum && s.email ? " · " : ""}
                       {s.email}
                     </p>
@@ -257,10 +252,10 @@ export default function AdminDashboard() {
                   <button
                     onClick={() => toggleCourseRep(s.id, s.role)}
                     disabled={isPromoting === s.id}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all shrink-0 ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 ${
                       isRep
-                        ? "bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40"
-                        : "bg-teal-50 text-teal-700 hover:bg-teal-100 dark:bg-teal-900/20 dark:text-teal-400 dark:hover:bg-teal-900/40"
+                        ? "bg-white/10 text-white hover:bg-white/20 border border-white/15"
+                        : "bg-white text-blue-900 hover:bg-blue-50"
                     } disabled:opacity-50`}
                   >
                     {isPromoting === s.id ? (

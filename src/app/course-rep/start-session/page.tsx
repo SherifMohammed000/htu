@@ -80,7 +80,6 @@ function StartSessionContent() {
   useEffect(() => {
     const loadStudents = async () => {
       try {
-        // Load activated users (students + course reps)
         const [students, reps] = await Promise.all([
           getUsersByRole("student"),
           getUsersByRole("course_rep"),
@@ -93,7 +92,6 @@ function StartSessionContent() {
         }));
         setAllStudents(combined);
 
-        // Build name lookup map
         const nameMap: Record<string, string> = {};
         combined.forEach((s) => {
           nameMap[s.id] = s.fullName;
@@ -132,7 +130,7 @@ function StartSessionContent() {
 
       const newSession: Omit<AttendanceSession, "id"> = {
         courseId: selectedCourseId,
-        lecturerId: user.id, // Course rep acts on behalf
+        lecturerId: user.id,
         sessionDate: now.toISOString().split("T")[0],
         startTime: now.toISOString(),
         qrToken: token,
@@ -253,20 +251,20 @@ function StartSessionContent() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
+    <div className="max-w-5xl mx-auto space-y-6 text-white">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link
           href="/course-rep/dashboard"
-          className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-600 dark:text-slate-400"
+          className="p-2.5 bg-white/10 hover:bg-white/20 border border-white/20 rounded-full transition-all text-white hover:scale-105 active:scale-95"
         >
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3 flex-wrap">
+          <h1 className="text-2xl font-extrabold text-white flex items-center gap-3 flex-wrap drop-shadow-md">
             {selectedCourse ? selectedCourse.courseName : "Start a Class Session"}
             {selectedCourse && (
-              <span className="px-2.5 py-1 text-sm rounded-lg bg-teal-50 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300 font-semibold tracking-wider">
+              <span className="px-2.5 py-1 text-sm rounded-lg bg-white/20 text-white border border-white/15 font-bold tracking-wider">
                 {selectedCourse.courseCode}
               </span>
             )}
@@ -276,16 +274,16 @@ function StartSessionContent() {
 
       {/* Course Selection (if no active session) */}
       {!activeSession && !selectedCourseId && (
-        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 shadow-sm">
-          <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4">
+        <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl p-6 shadow-xl text-white">
+          <h2 className="text-xl font-bold text-white mb-4">
             Select a Course
           </h2>
           {isLoadingCourses ? (
-            <div className="flex justify-center p-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600" />
+            <div className="flex justify-center p-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white" />
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {courses.map((course) => (
                 <button
                   key={course.id}
@@ -293,12 +291,12 @@ function StartSessionContent() {
                     setSelectedCourseId(course.id);
                     setSelectedCourse(course);
                   }}
-                  className="text-left p-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-teal-300 dark:hover:border-teal-700 hover:bg-teal-50 dark:hover:bg-teal-900/10 transition-all"
+                  className="text-left p-4 rounded-2xl border border-white/15 bg-white/5 hover:bg-white/10 hover:border-white/45 hover:scale-[1.02] transition-all"
                 >
-                  <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+                  <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-white/20 text-white border border-white/10">
                     {course.courseCode}
                   </span>
-                  <p className="font-semibold text-slate-900 dark:text-white mt-2">
+                  <p className="font-bold text-white mt-2.5 text-lg">
                     {course.courseName}
                   </p>
                 </button>
@@ -310,38 +308,38 @@ function StartSessionContent() {
 
       {/* Start Session prompt */}
       {!activeSession && selectedCourseId && (
-        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-8 text-center max-w-2xl mx-auto mt-6 shadow-sm">
-          <div className="w-20 h-20 bg-teal-50 dark:bg-teal-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
-            <MapPin className="w-10 h-10 text-teal-600 dark:text-teal-400" />
+        <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl p-8 text-center max-w-2xl mx-auto mt-6 shadow-xl text-white">
+          <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-6 border border-white/10 shadow-inner">
+            <MapPin className="w-10 h-10 text-white" />
           </div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
+          <h2 className="text-2xl font-extrabold text-white mb-2 drop-shadow-md">
             Ready to start class?
           </h2>
-          <p className="text-slate-500 dark:text-slate-400 mb-8 max-w-md mx-auto">
+          <p className="text-blue-100 mb-8 max-w-md mx-auto leading-relaxed">
             Your GPS location will be locked as the classroom reference point. Students must be
             within 30 meters to check in.
           </p>
           <button
             onClick={startSession}
             disabled={isStarting}
-            className="w-full sm:w-auto px-8 py-4 bg-teal-600 hover:bg-teal-700 disabled:opacity-60 text-white rounded-xl font-bold text-lg shadow-lg shadow-teal-600/30 transition-all active:scale-95 flex items-center gap-3 mx-auto justify-center"
+            className="w-full sm:w-auto px-8 py-4 bg-white text-blue-900 hover:bg-blue-50 disabled:opacity-60 rounded-xl font-bold text-lg shadow-lg transition-all hover:scale-105 active:scale-95 flex items-center gap-3 mx-auto justify-center"
           >
             {isStarting ? (
-              <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              <div className="h-5 w-5 border-2 border-blue-900/30 border-t-blue-900 rounded-full animate-spin" />
             ) : (
-              <Play className="w-5 h-5" />
+              <Play className="w-5 h-5 text-blue-900" />
             )}
             Start Class Session
           </button>
-          <p className="mt-4 text-sm text-slate-400">{locationStatus}</p>
+          <p className="mt-4 text-sm text-blue-200 font-semibold">{locationStatus}</p>
           <button
             onClick={() => {
               setSelectedCourseId(null);
               setSelectedCourse(null);
             }}
-            className="mt-2 text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 font-medium transition-colors"
+            className="mt-3 text-sm text-white/70 hover:text-white font-bold transition-colors block mx-auto underline underline-offset-4"
           >
-            ← Change course
+            Change course
           </button>
         </div>
       )}
@@ -350,57 +348,57 @@ function StartSessionContent() {
       {activeSession && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Left: QR & PIN */}
-          <div className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm flex flex-col items-center relative overflow-hidden">
-            <div className="absolute top-0 inset-x-0 h-1.5 bg-teal-100 dark:bg-teal-900/30">
+          <div className="bg-white/10 backdrop-blur-md rounded-3xl border border-white/20 p-6 shadow-xl flex flex-col items-center relative overflow-hidden text-white">
+            <div className="absolute top-0 inset-x-0 h-1.5 bg-white/10">
               <div
-                className="h-full bg-teal-600 transition-all duration-1000 ease-linear"
+                className="h-full bg-white transition-all duration-1000 ease-linear"
                 style={{ width: `${(timeRemaining / 30) * 100}%` }}
               />
             </div>
 
             <div className="flex w-full justify-between items-center mb-6 mt-2">
-              <div className="flex items-center gap-2 text-teal-600 dark:text-teal-400 font-medium bg-teal-50 dark:bg-teal-900/20 px-3 py-1.5 rounded-full text-sm">
-                <span className="w-2 h-2 rounded-full bg-teal-500 animate-pulse" />
+              <div className="flex items-center gap-2 text-white font-bold bg-white/20 px-3.5 py-1.5 rounded-full text-xs border border-white/10">
+                <span className="w-2.5 h-2.5 rounded-full bg-red-400 animate-pulse" />
                 Live Session
               </div>
-              <div className="text-sm font-medium text-slate-500 flex items-center gap-1.5">
+              <div className="text-sm font-bold text-blue-100 flex items-center gap-1.5 bg-white/5 border border-white/10 px-3 py-1 rounded-full">
                 <RefreshCw
-                  className={`w-4 h-4 ${timeRemaining <= 5 ? "animate-spin text-teal-500" : ""}`}
+                  className={`w-3.5 h-3.5 ${timeRemaining <= 5 ? "animate-spin text-white" : ""}`}
                 />
                 {timeRemaining}s
               </div>
             </div>
 
-            <div className="bg-white p-4 rounded-2xl shadow-inner border border-slate-100 mb-6">
+            <div className="bg-white p-5 rounded-2xl shadow-xl border border-white/20 mb-6">
               <QRCode
                 value={JSON.stringify({
                   sessionId: activeSession.id,
                   token: qrToken,
                   ts: Date.now(),
                 })}
-                size={200}
+                size={220}
                 level="H"
                 includeMargin
               />
             </div>
 
             <div className="w-full">
-              <p className="text-center text-xs text-slate-500 mb-2 font-semibold uppercase tracking-wider">
+              <p className="text-center text-xs text-blue-200 mb-2 font-bold uppercase tracking-wider">
                 Classroom PIN
               </p>
-              <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 flex items-center justify-between">
-                <span className="text-4xl font-mono font-bold tracking-[0.25em] text-slate-900 dark:text-white pl-2">
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between">
+                <span className="text-4xl font-mono font-extrabold tracking-[0.25em] text-white pl-2 drop-shadow-sm">
                   {activeSession.pinCode}
                 </span>
                 <button
                   onClick={copyPin}
-                  className="p-3 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-colors"
+                  className="p-3 hover:bg-white/15 rounded-xl transition-all hover:scale-105 active:scale-95"
                   title="Copy PIN"
                 >
                   {isCopied ? (
-                    <CheckCircle className="w-6 h-6 text-green-500" />
+                    <CheckCircle className="w-6 h-6 text-white" />
                   ) : (
-                    <Copy className="w-6 h-6 text-slate-400" />
+                    <Copy className="w-6 h-6 text-white/60" />
                   )}
                 </button>
               </div>
@@ -409,51 +407,51 @@ function StartSessionContent() {
 
           {/* Right: Stats & Controls */}
           <div className="flex flex-col gap-4">
-            <div className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
-              <h3 className="font-bold text-slate-900 dark:text-white mb-4">Session Stats</h3>
-              <div className="grid grid-cols-2 gap-3 mb-4">
-                <div className="bg-slate-50 dark:bg-slate-900/50 rounded-2xl p-4">
-                  <p className="text-xs text-slate-500 mb-1">Duration</p>
-                  <p className="text-3xl font-bold font-mono text-slate-900 dark:text-white">
+            <div className="bg-white/10 backdrop-blur-md rounded-3xl border border-white/20 p-6 shadow-xl text-white">
+              <h3 className="font-bold text-white mb-4 text-lg">Session Stats</h3>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
+                  <p className="text-xs text-blue-200 mb-1 font-semibold uppercase tracking-wider">Duration</p>
+                  <p className="text-3xl font-extrabold font-mono text-white">
                     {formatDuration(sessionDuration)}
                   </p>
                 </div>
-                <div className="bg-teal-50 dark:bg-teal-900/20 rounded-2xl p-4">
-                  <p className="text-xs text-teal-600 mb-1">Present</p>
-                  <p className="text-3xl font-bold text-teal-700 dark:text-teal-300 flex items-center gap-2">
-                    <Users className="w-5 h-5" />
+                <div className="bg-white/15 border border-white/20 rounded-2xl p-4">
+                  <p className="text-xs text-blue-100 mb-1 font-semibold uppercase tracking-wider">Present</p>
+                  <p className="text-3xl font-extrabold text-white flex items-center gap-2">
+                    <Users className="w-6 h-6" />
                     {attendanceRecords.length}
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-900/50 rounded-xl">
-                <div className="p-2 bg-teal-50 dark:bg-teal-900/30 text-teal-600 rounded-lg">
+              <div className="flex items-center gap-3 p-3 bg-white/5 border border-white/10 rounded-xl">
+                <div className="p-2 bg-white/10 border border-white/10 text-white rounded-lg">
                   <MapPin className="w-4 h-4" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-slate-900 dark:text-white">
+                  <p className="text-sm font-bold text-white">
                     Geofencing Active
                   </p>
-                  <p className="text-xs text-slate-500">30-meter radius</p>
+                  <p className="text-xs text-blue-200 font-semibold mt-0.5">30-meter radius</p>
                 </div>
               </div>
             </div>
 
             {/* Live Attendance List */}
             {attendanceRecords.length > 0 && (
-              <div className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 p-4 shadow-sm max-h-48 overflow-y-auto">
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
+              <div className="bg-white/10 backdrop-blur-md rounded-3xl border border-white/20 p-4 shadow-xl max-h-48 overflow-y-auto">
+                <p className="text-xs font-bold text-blue-200 uppercase tracking-wider mb-3">
                   Checked In ({attendanceRecords.length})
                 </p>
                 <div className="space-y-2">
                   {attendanceRecords.map((r) => (
                     <div key={r.id} className="flex items-center gap-3 text-sm">
-                      <UserCheck className="w-4 h-4 text-green-500 shrink-0" />
-                      <span className="text-slate-700 dark:text-slate-300 truncate">
+                      <UserCheck className="w-4 h-4 text-white shrink-0" />
+                      <span className="text-white font-semibold truncate">
                         {getStudentDisplay(r.studentId)}
                       </span>
-                      <span className="ml-auto text-xs text-slate-400 shrink-0">
+                      <span className="ml-auto text-xs text-blue-200 font-bold bg-white/10 px-2 py-0.5 rounded border border-white/10 shrink-0">
                         {r.method === "manual" ? "Manual" : "QR"}
                       </span>
                     </div>
@@ -465,18 +463,18 @@ function StartSessionContent() {
             {/* Manual Sign-in */}
             <button
               onClick={() => setIsManualModalOpen(true)}
-              className="w-full flex items-center justify-center gap-2 py-3 bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-300 hover:bg-teal-100 dark:hover:bg-teal-900/40 rounded-2xl font-semibold transition-colors"
+              className="w-full flex items-center justify-center gap-2 py-4 bg-white/10 border border-white/20 text-white hover:bg-white/15 rounded-2xl font-bold transition-all hover:scale-[1.01] active:scale-[0.99] shadow-md"
             >
-              <PenLine className="w-5 h-5" />
+              <PenLine className="w-5 h-5 text-white" />
               Manually Sign In Student
             </button>
 
             {/* End Session */}
             <button
               onClick={stopSession}
-              className="w-full flex items-center justify-center gap-2 py-4 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 rounded-2xl font-bold transition-colors"
+              className="w-full flex items-center justify-center gap-2 py-4 bg-white text-blue-900 hover:bg-blue-50 rounded-2xl font-bold transition-all hover:scale-[1.01] active:scale-[0.99] shadow-lg"
             >
-              <StopCircle className="w-6 h-6" />
+              <StopCircle className="w-6 h-6 text-blue-900" />
               End Session &amp; Generate Report
             </button>
           </div>
@@ -485,34 +483,35 @@ function StartSessionContent() {
 
       {/* Manual Sign-in Modal */}
       {isManualModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-md p-6 animate-in zoom-in-95 duration-200">
-            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-1">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
+          <div className="bg-gradient-to-br from-sky-400 via-blue-700 to-red-600 rounded-3xl border border-white/20 shadow-2xl w-full max-w-md p-6 animate-in zoom-in-95 duration-200 text-white relative">
+            <div className="absolute top-0 left-0 w-full h-full bg-black/20 rounded-3xl pointer-events-none -z-10" />
+            <h3 className="text-xl font-extrabold text-white mb-1">
               Manual Sign-in
             </h3>
-            <p className="text-slate-500 dark:text-slate-400 text-sm mb-4">
+            <p className="text-blue-100 text-sm mb-4 font-semibold">
               Search for a student to mark as present.
             </p>
 
             <div className="relative mb-4">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/50" />
               <input
                 type="text"
                 value={manualSearch}
                 onChange={(e) => setManualSearch(e.target.value)}
                 placeholder="Search by name or index number..."
-                className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 text-sm"
+                className="w-full pl-10 pr-4 py-3 rounded-xl border border-white/20 bg-white/5 text-white placeholder-white/30 focus:outline-none focus:border-white focus:ring-2 focus:ring-white/10 text-sm font-semibold"
                 autoFocus
               />
             </div>
 
             <div className="max-h-60 overflow-y-auto space-y-1 mb-4">
               {!manualSearch.trim() ? (
-                <p className="text-center text-slate-400 py-8 text-sm">
+                <p className="text-center text-blue-200 py-8 text-sm font-semibold">
                   Type a name or index number to search
                 </p>
               ) : filteredStudents.length === 0 ? (
-                <p className="text-center text-slate-400 py-8 text-sm">
+                <p className="text-center text-blue-200 py-8 text-sm font-semibold">
                   No matching students found.
                 </p>
               ) : (
@@ -520,20 +519,20 @@ function StartSessionContent() {
                   <button
                     key={student.id}
                     onClick={() => manualSignIn(student.id)}
-                    className="w-full flex items-center gap-3 p-3 hover:bg-slate-50 dark:hover:bg-slate-700/50 rounded-xl transition-colors text-left"
+                    className="w-full flex items-center gap-3 p-3 hover:bg-white/10 rounded-xl transition-colors text-left"
                   >
-                    <div className="w-9 h-9 rounded-full bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center text-teal-700 dark:text-teal-300 font-bold text-sm shrink-0">
+                    <div className="w-9 h-9 rounded-full bg-white/20 border border-white/10 flex items-center justify-center text-white font-extrabold text-sm shrink-0">
                       {student.fullName.charAt(0)}
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                      <p className="text-sm font-bold text-white">
                         {student.fullName}
                       </p>
-                      <p className="text-xs text-slate-500 font-mono">
+                      <p className="text-xs text-blue-200 font-mono mt-0.5">
                         {student.indexNumber || student.studentId}
                       </p>
                     </div>
-                    <UserCheck className="ml-auto w-5 h-5 text-slate-300 dark:text-slate-600" />
+                    <UserCheck className="ml-auto w-5 h-5 text-white/60" />
                   </button>
                 ))
               )}
@@ -544,7 +543,7 @@ function StartSessionContent() {
                 setIsManualModalOpen(false);
                 setManualSearch("");
               }}
-              className="w-full py-3 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 font-semibold transition-colors"
+              className="w-full py-3 rounded-xl bg-white text-blue-900 hover:bg-blue-50 font-bold transition-colors"
             >
               Cancel
             </button>
@@ -559,8 +558,8 @@ export default function StartSessionPage() {
   return (
     <Suspense
       fallback={
-        <div className="p-8 flex justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600" />
+        <div className="p-8 flex justify-center text-white">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white" />
         </div>
       }
     >

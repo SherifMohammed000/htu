@@ -30,7 +30,6 @@ export default function StudentDashboard() {
 
   // Attendance rate per course
   const rateBySession = (courseId: string) => {
-    // We'd need to join sessions + records — simplified for now
     return overallRate;
   };
 
@@ -39,12 +38,12 @@ export default function StudentDashboard() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
+          <h1 className="text-3xl font-extrabold tracking-tight text-white drop-shadow-md">
             Hello, {user?.fullName?.split(" ")[0]}! 👋
           </h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-blue-100 mt-1 font-medium">
             {user?.studentId && (
-              <span className="font-mono font-semibold text-slate-600 dark:text-slate-300">
+              <span className="font-mono font-bold text-white bg-white/10 px-2 py-0.5 rounded border border-white/10 mr-1.5">
                 {user.studentId}
               </span>
             )}
@@ -54,52 +53,52 @@ export default function StudentDashboard() {
         </div>
         <Link
           href="/student/scan"
-          className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl shadow-lg shadow-red-600/30 transition-all active:scale-95"
+          className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white text-blue-900 hover:bg-blue-50 font-bold rounded-xl shadow-lg transition-all hover:scale-105 active:scale-95"
         >
-          <ScanLine className="w-5 h-5" />
+          <ScanLine className="w-5 h-5 text-blue-900" />
           Scan QR Code
         </Link>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-100 dark:border-slate-700 shadow-sm flex items-center gap-4">
-          <div className="bg-red-50 dark:bg-red-900/30 p-4 rounded-xl text-red-600 dark:text-red-400">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-xl flex items-center gap-4 text-white">
+          <div className="bg-white/15 p-4 rounded-xl text-white border border-white/10">
             <CheckCircle2 className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+            <p className="text-sm font-semibold text-blue-100">
               Overall Attendance
             </p>
-            <p className="text-3xl font-bold text-slate-900 dark:text-white">
+            <p className="text-3.5xl font-extrabold text-white mt-0.5 drop-shadow-sm">
               {isLoading ? "—" : `${overallRate}%`}
             </p>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-100 dark:border-slate-700 shadow-sm flex items-center gap-4">
-          <div className="bg-blue-50 dark:bg-blue-900/30 p-4 rounded-xl text-blue-600 dark:text-blue-400">
+        <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-xl flex items-center gap-4 text-white">
+          <div className="bg-white/15 p-4 rounded-xl text-white border border-white/10">
             <BookOpen className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+            <p className="text-sm font-semibold text-blue-100">
               Enrolled Courses
             </p>
-            <p className="text-3xl font-bold text-slate-900 dark:text-white">
+            <p className="text-3.5xl font-extrabold text-white mt-0.5 drop-shadow-sm">
               {isLoading ? "—" : courses.length}
             </p>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-100 dark:border-slate-700 shadow-sm flex items-center gap-4">
-          <div className="bg-slate-100 dark:bg-slate-700 p-4 rounded-xl text-blue-700 dark:text-blue-400">
+        <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-xl flex items-center gap-4 text-white">
+          <div className="bg-white/15 p-4 rounded-xl text-white border border-white/10">
             <Clock className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+            <p className="text-sm font-semibold text-blue-100">
               Sessions Attended
             </p>
-            <p className="text-3xl font-bold text-slate-900 dark:text-white">
+            <p className="text-3.5xl font-extrabold text-white mt-0.5 drop-shadow-sm">
               {isLoading ? "—" : presentCount}
             </p>
           </div>
@@ -107,48 +106,48 @@ export default function StudentDashboard() {
       </div>
 
       {/* Courses */}
-      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
-          <h2 className="text-xl font-bold text-slate-900 dark:text-white">My Courses</h2>
+      <div className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-xl overflow-hidden text-white">
+        <div className="p-6 border-b border-white/10 flex items-center justify-between">
+          <h2 className="text-xl font-bold text-white">My Courses</h2>
           <Link
             href="/student/history"
-            className="text-sm font-medium text-red-600 hover:text-red-700 dark:text-red-400"
+            className="text-sm font-bold text-blue-100 hover:text-white transition-colors"
           >
-            View History
+            View History →
           </Link>
         </div>
 
         {isLoading ? (
-          <div className="p-8 flex justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600" />
+          <div className="p-12 flex justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white" />
           </div>
         ) : courses.length === 0 ? (
-          <div className="p-10 text-center text-slate-400">
-            <BookOpen className="w-10 h-10 mx-auto mb-3 opacity-40" />
-            <p className="font-medium">No courses enrolled yet.</p>
+          <div className="p-12 text-center text-blue-200">
+            <BookOpen className="w-12 h-12 mx-auto mb-3 opacity-60" />
+            <p className="font-semibold text-lg">No courses enrolled yet.</p>
           </div>
         ) : (
-          <div className="divide-y divide-slate-100 dark:divide-slate-700">
+          <div className="divide-y divide-white/10">
             {courses.map((course) => (
               <div
                 key={course.id}
-                className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50 dark:hover:bg-slate-700/40 transition-colors"
+                className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-white/5 transition-colors"
               >
                 <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-white/20 text-white border border-white/10">
                       {course.courseCode}
                     </span>
                   </div>
-                  <h3 className="font-semibold text-lg text-slate-900 dark:text-white">
+                  <h3 className="font-bold text-lg text-white">
                     {course.courseName}
                   </h3>
                 </div>
-                <div className="flex flex-col items-end gap-1 shrink-0">
-                  <span className="text-2xl font-bold text-red-600 dark:text-red-400">
+                <div className="flex flex-col items-end gap-0.5 shrink-0">
+                  <span className="text-2xl font-extrabold text-white drop-shadow-sm">
                     {rateBySession(course.id)}%
                   </span>
-                  <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">
+                  <span className="text-xs font-semibold text-blue-200 uppercase tracking-wider">
                     Attendance
                   </span>
                 </div>
@@ -159,13 +158,13 @@ export default function StudentDashboard() {
       </div>
 
       {/* Location notice */}
-      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/50 rounded-2xl p-5 flex items-start gap-4">
-        <AlertCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+      <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 flex items-start gap-4 text-white shadow-xl">
+        <AlertCircle className="w-6 h-6 text-white shrink-0 mt-0.5" />
         <div>
-          <h3 className="font-semibold text-blue-900 dark:text-blue-100 text-sm">
+          <h3 className="font-bold text-white text-sm">
             Location Services Required
           </h3>
-          <p className="text-blue-700 dark:text-blue-300 text-sm mt-0.5">
+          <p className="text-blue-100 text-sm mt-1 leading-relaxed">
             When checking in, your browser will request your GPS location to verify you are physically
             in the classroom within a 30-meter radius.
           </p>
