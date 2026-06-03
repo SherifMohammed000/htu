@@ -3,7 +3,7 @@ import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 
 export const metadata: Metadata = {
-  title: "HTU Attendance System",
+  title: "URoll",
   description: "Modern University Attendance Management System",
   manifest: "/manifest.json",
   icons: {

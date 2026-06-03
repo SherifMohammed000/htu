@@ -1,6 +1,6 @@
 {
-  "name": "HTU Attendance System",
-  "short_name": "HTU Attend",
+  "name": "URoll",
+  "short_name": "URoll",
   "description": "Smart QR-based university attendance management",
   "start_url": "/",
   "display": "standalone",
