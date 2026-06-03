@@ -9,8 +9,10 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@tensorflow/tfjs": "^4.22.0",
     "@types/papaparse": "^5.5.2",
     "date-fns": "^4.4.0",
+    "face-api.js": "^0.22.2",
     "firebase": "^12.14.0",
     "firebase-admin": "^13.10.0",
     "html5-qrcode": "^2.3.8",

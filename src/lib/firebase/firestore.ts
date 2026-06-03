@@ -137,7 +137,51 @@ export async function getUsersByRole(role: string): Promise<User[]> {
   return snap.docs.map(d => ({ id: d.id, ...d.data() } as User));
 }
 
-export async function getCourseStudents(courseId: string): Promise<User[]> {
+
+export async function getLecturerSummary(lecturerId: string): Promise<Array<{studentId:string, studentName:string, present:number, absent:number, totalSessions:number}>> {
+  // 1. Get all sessions for this lecturer
+  const sessionsSnap = await getDocs(query(collection(db, 'sessions'), where('lecturerId', '==', lecturerId)));
+  const sessionIds = sessionsSnap.docs.map(d => d.id);
+  if (sessionIds.length === 0) return [];
+
+  // 2. Get all students (to map IDs to names)
+  const students = await getUsersByRole('student');
+  const nameMap: Record<string, string> = {};
+  students.forEach(s => { nameMap[s.id] = s.fullName; });
+
+  // 3. Accumulate attendance per student
+  const stats: Record<string, {present:number, absent:number, totalSessions:number}> = {};
+  // For each session, get its attendance
+  for (const sid of sessionIds) {
+    const records = await getSessionAttendance(sid);
+    // Mark present
+    records.forEach(r => {
+      if (!stats[r.studentId]) stats[r.studentId] = {present:0, absent:0, totalSessions:0};
+      if (r.status === 'present') stats[r.studentId].present++;
+      else stats[r.studentId].absent++;
+    });
+    // Count absent students for this session (students not in records)
+    const presentIds = new Set(records.map(r=>r.studentId));
+    students.forEach(s=>{
+      if (!presentIds.has(s.id)) {
+        if (!stats[s.id]) stats[s.id] = {present:0, absent:0, totalSessions:0};
+        stats[s.id].absent++;
+      }
+    });
+    // Increment totalSessions for every student (present or absent) for this session
+    students.forEach(s=>{ if (!stats[s.id]) stats[s.id] = {present:0, absent:0, totalSessions:0}; stats[s.id].totalSessions++; });
+  }
+
+  // 4. Build result array
+  return Object.entries(stats).map(([id, val]) => ({
+    studentId: id,
+    studentName: nameMap[id] ?? 'Unknown',
+    present: val.present,
+    absent: val.absent,
+    totalSessions: val.totalSessions,
+  }));
+}
+
   // Fetch students enrolled in a course (via enrollments sub-collection or query)
   const q = query(collection(db, 'users'), where('role', '==', 'student'), where('enrolledCourses', 'array-contains', courseId));
   const snap = await getDocs(q);

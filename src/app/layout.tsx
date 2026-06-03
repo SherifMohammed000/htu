@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import { AuthProvider } from "@/context/AuthContext";
+import { AuthProvider } from '@/context/AuthContext';
+import { PushSwRegister } from '@/components/PushSwRegister';
 
 export const metadata: Metadata = {
   title: "URoll",
@@ -26,6 +27,8 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+
+
   return (
     <html
       lang="en"
@@ -33,6 +36,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-50">
         <AuthProvider>
+          <PushSwRegister />
           {children}
         </AuthProvider>
       </body>

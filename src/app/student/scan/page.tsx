@@ -8,6 +8,7 @@ import { db } from "@/lib/firebase/config";
 import { AttendanceSession } from "@/lib/mock/db";
 import { MapPin, CheckCircle, AlertTriangle, ArrowRight, QrCode, ShieldCheck, Scan } from "lucide-react";
 import Link from "next/link";
+import { FaceVerifyModal } from "@/components/FaceVerifyModal";
 
 // Haversine formula — returns distance in metres
 function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
@@ -21,7 +22,7 @@ function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: numbe
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-type PageStatus = "idle" | "locating" | "scanning" | "submitting" | "success" | "error";
+type PageStatus = "idle" | "locating" | "verifying_face" | "scanning" | "submitting" | "success" | "error";
 
 export default function StudentScan() {
   const { user } = useAuth();
@@ -76,10 +77,10 @@ export default function StudentScan() {
           }
         }
 
-        // PIN valid + within radius → unlock QR scanner
+        // PIN valid + within radius → verify face first
         setVerifiedSession(session);
         setStudentCoords({ lat, lng });
-        setStatus("scanning");
+        setStatus("verifying_face");
       } catch (err: unknown) {
         setStatus("error");
         setErrorMessage(err instanceof Error ? err.message : "An error occurred. Please try again.");
@@ -198,6 +199,26 @@ export default function StudentScan() {
           Return to Dashboard
         </Link>
       </div>
+    );
+  }
+
+  // ── FACE VERIFICATION STEP ──
+  if (status === "verifying_face" && verifiedSession) {
+    return (
+      <FaceVerifyModal
+        sessionId={verifiedSession.id}
+        onSuccess={() => setStatus("scanning")}
+        onFailure={() => {
+          setStatus("error");
+          setErrorMessage("Face verification failed after 3 attempts. You have been marked absent for this session.");
+          setVerifiedSession(null);
+        }}
+        onCancel={() => {
+          setStatus("idle");
+          setVerifiedSession(null);
+          setPin("");
+        }}
+      />
     );
   }
 
