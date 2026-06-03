@@ -8,7 +8,7 @@ export function getFirebaseAdmin() {
   }
 
   try {
-    const saPath = path.join(process.cwd(), 'service-account.json.json');
+    const saPath = path.join(process.cwd(), 'service-account.json');
     const saFile = fs.readFileSync(saPath, 'utf8');
     const serviceAccount = JSON.parse(saFile);
 
