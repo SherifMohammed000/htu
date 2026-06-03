@@ -3,6 +3,7 @@ import { getAuth } from "firebase/auth";
 import { getFirestore, initializeFirestore } from "firebase/firestore";
 import { getAnalytics, isSupported as isAnalyticsSupported } from "firebase/analytics";
 import { getMessaging, isSupported as isMessagingSupported } from "firebase/messaging";
+import { getStorage } from "firebase/storage";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -29,6 +30,8 @@ try {
   db = getFirestore(app);
 }
 
+const storage = getStorage(app);
+
 // Initialize Analytics & Messaging safely (only runs in browser environment)
 let analytics;
 let messaging: any;
@@ -47,4 +50,4 @@ if (typeof window !== "undefined") {
   });
 }
 
-export { app, auth, db, analytics, messaging };
+export { app, auth, db, analytics, messaging, storage };

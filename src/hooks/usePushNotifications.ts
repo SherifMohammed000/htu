@@ -39,9 +39,14 @@ export const usePushNotifications = () => {
       } catch (err) {
         console.error('Error retrieving FCM token', err);
       }
+    }
+  };
 
+  useEffect(() => {
     // Optional foreground message handling – you can extend this with UI toast
-    const unsubscribe = messaging?.onMessage?.((payload) => {
+    if (!messaging || typeof messaging.onMessage !== 'function') return;
+    
+    const unsubscribe = messaging.onMessage((payload: any) => {
       console.log('Foreground message 📬', payload);
     });
 

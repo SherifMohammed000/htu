@@ -1,7 +1,7 @@
 // src/components/FaceCapture.tsx
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { getAuth } from 'firebase/auth';
 import { db } from '@/lib/firebase/config';
 import { collection, doc, setDoc } from 'firebase/firestore';
@@ -59,7 +59,7 @@ export const FaceCapture = () => {
   };
 
   // start camera on mount
-  React.useEffect(() => {
+  useEffect(() => {
     startCamera();
     // cleanup on unmount
     return () => {

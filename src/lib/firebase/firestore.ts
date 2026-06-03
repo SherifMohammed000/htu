@@ -182,6 +182,7 @@ export async function getLecturerSummary(lecturerId: string): Promise<Array<{stu
   }));
 }
 
+export async function getCourseStudents(courseId: string): Promise<User[]> {
   // Fetch students enrolled in a course (via enrollments sub-collection or query)
   const q = query(collection(db, 'users'), where('role', '==', 'student'), where('enrolledCourses', 'array-contains', courseId));
   const snap = await getDocs(q);
