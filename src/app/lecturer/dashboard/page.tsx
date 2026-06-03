@@ -63,7 +63,7 @@ export default function LecturerDashboard() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight text-white drop-shadow-md">
-            Welcome back, {user?.fullName?.split(" ")[0]}!
+            Welcome back, {user?.fullName}!
           </h1>
           <p className="text-blue-100 mt-1 font-medium">
             {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
