@@ -253,16 +253,6 @@ export default function Home() {
     try {
       const ip = await fetchIpAddress();
       
-      const usersRef = collection(db, 'users');
-      const q = query(usersRef, where("ipAddress", "==", ip));
-      const querySnapshot = await getDocs(q);
-      
-      if (!querySnapshot.empty) {
-        setError("This device (IP) has already been used to activate an account.");
-        setIsSubmitting(false);
-        return;
-      }
-      
       const matched = allStudents.find(s => (s.indexNumber || "").replace(/\s+/g, "").toUpperCase() === identifier.replace(/\s+/g, "").toUpperCase());
       if (matched && matched.type === "lecturer") {
         await registerLecturer(identifier, fullName, password, ip);

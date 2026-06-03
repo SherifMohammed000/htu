@@ -1,15 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { recordAttendance } from "@/lib/firebase/firestore";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
 import { AttendanceSession } from "@/lib/mock/db";
-import { MapPin, CheckCircle, AlertTriangle, ArrowRight, QrCode } from "lucide-react";
+import { MapPin, CheckCircle, AlertTriangle, ArrowRight, ShieldCheck, Scan } from "lucide-react";
 import Link from "next/link";
 
-// Haversine formula — returns distance in metres
 function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
   const R = 6371e3;
   const φ1 = (lat1 * Math.PI) / 180;
@@ -21,18 +20,25 @@ function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: numbe
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
+type PageStatus = "idle" | "locating" | "scanning" | "submitting" | "success" | "error";
+
 export default function CourseRepScan() {
   const { user } = useAuth();
   const [pin, setPin] = useState("");
-  const [status, setStatus] = useState<"idle" | "verifying" | "success" | "error">("idle");
+  const [status, setStatus] = useState<PageStatus>("idle");
   const [errorMessage, setErrorMessage] = useState("");
+  const [verifiedSession, setVerifiedSession] = useState<AttendanceSession | null>(null);
+  const [studentCoords, setStudentCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const qrRegionRef = useRef<HTMLDivElement>(null);
+  const scannerRef = useRef<any>(null);
 
-  const verifyAttendance = async (e: React.FormEvent) => {
+  const handlePinSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
-    setStatus("verifying");
+    setStatus("locating");
+    setErrorMessage("");
 
-    const doVerify = async (lat: number, lng: number) => {
+    const doLocate = async (lat: number, lng: number) => {
       try {
         const q = query(
           collection(db, "sessions"),
@@ -50,27 +56,25 @@ export default function CourseRepScan() {
         const sessionDoc = snap.docs[0];
         const session = { id: sessionDoc.id, ...sessionDoc.data() } as AttendanceSession;
 
-        if (session.location.lat !== 0 && session.location.lng !== 0 && lat !== 0) {
+        if (session.location.lat !== 0 && session.location.lng !== 0) {
+          if (lat === 0) {
+            setStatus("error");
+            setErrorMessage("Location access is required. Please enable GPS and try again.");
+            return;
+          }
           const distance = haversineDistance(session.location.lat, session.location.lng, lat, lng);
           if (distance > 30) {
             setStatus("error");
             setErrorMessage(
-              `You are ${Math.round(distance)}m from the classroom. You must be within 30m.`
+              `You are ${Math.round(distance)}m away. You must be within 30m of the classroom.`
             );
             return;
           }
         }
 
-        await recordAttendance({
-          studentId: user.id,
-          sessionId: session.id,
-          timestamp: new Date().toISOString(),
-          gpsCoordinates: { lat, lng },
-          status: "present",
-          method: "qr",
-        });
-
-        setStatus("success");
+        setVerifiedSession(session);
+        setStudentCoords({ lat, lng });
+        setStatus("scanning");
       } catch (err: unknown) {
         setStatus("error");
         setErrorMessage(err instanceof Error ? err.message : "An error occurred.");
@@ -79,14 +83,81 @@ export default function CourseRepScan() {
 
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
-        (pos) => doVerify(pos.coords.latitude, pos.coords.longitude),
+        (pos) => doLocate(pos.coords.latitude, pos.coords.longitude),
         () => {
           setStatus("error");
           setErrorMessage("Location access denied. Please enable location services.");
-        }
+        },
+        { timeout: 10000, maximumAge: 0 }
       );
     } else {
-      doVerify(0, 0);
+      doLocate(0, 0);
+    }
+  };
+
+  useEffect(() => {
+    if (status !== "scanning" || !qrRegionRef.current) return;
+
+    let stopped = false;
+
+    import("html5-qrcode").then(({ Html5Qrcode }) => {
+      if (stopped || !qrRegionRef.current) return;
+
+      const scanner = new Html5Qrcode("qr-reader-rep");
+      scannerRef.current = scanner;
+
+      scanner.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: { width: 250, height: 250 } },
+        (decodedText) => {
+          if (stopped) return;
+          stopped = true;
+          scanner.stop().catch(() => {});
+          handleQrScanned(decodedText);
+        },
+        () => {}
+      ).catch(() => {
+        setStatus("error");
+        setErrorMessage("Could not access camera. Please allow camera access and try again.");
+      });
+    });
+
+    return () => {
+      stopped = true;
+      if (scannerRef.current) {
+        scannerRef.current.stop().catch(() => {});
+      }
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status]);
+
+  const handleQrScanned = async (qrData: string) => {
+    if (!user || !verifiedSession || !studentCoords) return;
+    setStatus("submitting");
+
+    try {
+      let payload: { sessionId?: string; token?: string } = {};
+      try { payload = JSON.parse(qrData); } catch { /* not JSON */ }
+
+      if (payload.sessionId !== verifiedSession.id) {
+        setStatus("error");
+        setErrorMessage("QR code does not match this session's PIN. Please scan the correct code.");
+        return;
+      }
+
+      await recordAttendance({
+        studentId: user.id,
+        sessionId: verifiedSession.id,
+        timestamp: new Date().toISOString(),
+        gpsCoordinates: studentCoords,
+        status: "present",
+        method: "qr",
+      });
+
+      setStatus("success");
+    } catch (err: unknown) {
+      setStatus("error");
+      setErrorMessage(err instanceof Error ? err.message : "An error occurred.");
     }
   };
 
@@ -97,15 +168,56 @@ export default function CourseRepScan() {
           <CheckCircle className="w-12 h-12 text-white" />
         </div>
         <h2 className="text-3xl font-extrabold text-white mb-2 drop-shadow-sm">Check-in Successful!</h2>
-        <p className="text-blue-100 mb-8 font-medium">
-          Your attendance has been recorded and verified.
-        </p>
+        <p className="text-blue-100 mb-8 font-medium">Your attendance has been recorded and verified.</p>
         <Link
           href="/course-rep/dashboard"
           className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-white text-blue-900 rounded-xl font-bold transition-all hover:scale-105 active:scale-95 shadow-md"
         >
           Return to Dashboard
         </Link>
+      </div>
+    );
+  }
+
+  if (status === "scanning" || status === "submitting") {
+    return (
+      <div className="max-w-lg mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 text-white">
+        <div className="text-center">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-green-500/20 border border-green-400/30 rounded-full text-green-200 text-sm font-bold mb-4">
+            <ShieldCheck className="w-4 h-4" /> Location Verified — Within Range
+          </div>
+          <h1 className="text-3xl font-extrabold text-white drop-shadow-md">Scan QR Code</h1>
+          <p className="text-blue-100 mt-2 font-medium">Point your camera at the QR code on the screen.</p>
+        </div>
+
+        {status === "submitting" ? (
+          <div className="bg-white/10 backdrop-blur-md rounded-3xl border border-white/20 shadow-xl p-12 flex flex-col items-center gap-4">
+            <div className="w-10 h-10 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            <p className="text-white font-semibold">Recording attendance...</p>
+          </div>
+        ) : (
+          <div className="bg-white/10 backdrop-blur-md rounded-3xl border border-white/20 shadow-xl overflow-hidden">
+            <div className="p-4">
+              <div
+                id="qr-reader-rep"
+                ref={qrRegionRef}
+                className="w-full rounded-2xl overflow-hidden"
+                style={{ minHeight: 300 }}
+              />
+            </div>
+            <div className="px-6 pb-6 flex items-center justify-center gap-2 text-sm text-blue-200 font-semibold">
+              <Scan className="w-4 h-4" />
+              Scanning for QR code...
+            </div>
+          </div>
+        )}
+
+        <button
+          onClick={() => { setStatus("idle"); setVerifiedSession(null); setStudentCoords(null); setPin(""); }}
+          className="w-full py-3 px-6 border border-white/20 rounded-xl text-white/70 hover:text-white text-sm font-semibold transition-colors"
+        >
+          ← Back to PIN entry
+        </button>
       </div>
     );
   }
@@ -118,33 +230,33 @@ export default function CourseRepScan() {
       </div>
 
       <div className="bg-white/10 backdrop-blur-md rounded-3xl border border-white/20 shadow-xl overflow-hidden">
-        <div className="bg-black/20 py-12 relative flex flex-col items-center justify-center gap-4 border-b border-white/10">
-          <div className="relative z-10 w-40 h-40 border-2 border-white/30 rounded-3xl flex items-center justify-center">
-            <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-white rounded-tl-xl" />
-            <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-white rounded-tr-xl" />
-            <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-white rounded-bl-xl" />
-            <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-white rounded-br-xl" />
-            <QrCode className="w-16 h-16 text-white/50 animate-pulse" />
+        <div className="bg-black/20 px-6 py-4 border-b border-white/10 flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-full bg-white text-blue-900 flex items-center justify-center text-xs font-extrabold">1</div>
+            <span className="text-sm font-bold text-white">Enter PIN</span>
           </div>
-          <p className="text-white/80 text-sm font-semibold">Point camera at QR code</p>
-          <p className="text-blue-200 text-xs font-medium">(Camera scanning coming soon — use PIN below)</p>
+          <div className="flex-1 h-px bg-white/20" />
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-full bg-white/20 text-white/40 flex items-center justify-center text-xs font-extrabold border border-white/10">2</div>
+            <span className="text-sm font-bold text-white/40">Scan QR</span>
+          </div>
         </div>
 
         <div className="p-6">
           {status === "error" && (
-            <div className="mb-6 p-4 bg-red-500/20 border border-red-500/30 rounded-xl flex items-start gap-3 text-white">
+            <div className="mb-6 p-4 bg-red-500/20 border border-red/30 rounded-xl flex items-start gap-3 text-white">
               <AlertTriangle className="w-5 h-5 text-white shrink-0 mt-0.5" />
               <p className="text-sm font-semibold">{errorMessage}</p>
             </div>
           )}
 
-          <form onSubmit={verifyAttendance} className="space-y-6">
+          <form onSubmit={handlePinSubmit} className="space-y-6">
             <div>
-              <label htmlFor="pin" className="block text-sm font-bold text-blue-100 mb-2">
+              <label htmlFor="pin-rep" className="block text-sm font-bold text-blue-100 mb-2">
                 Classroom PIN
               </label>
               <input
-                id="pin"
+                id="pin-rep"
                 type="text"
                 inputMode="numeric"
                 maxLength={4}
@@ -159,24 +271,27 @@ export default function CourseRepScan() {
               />
             </div>
 
-            <div className="flex items-center justify-center gap-2 text-sm text-blue-200 font-semibold">
-              <MapPin className="w-4 h-4" />
-              Location will be verified automatically
+            <div className="bg-white/5 border border-white/10 rounded-xl p-4 flex items-start gap-3">
+              <MapPin className="w-5 h-5 text-blue-200 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-bold text-white">Location Required</p>
+                <p className="text-xs text-blue-200 mt-0.5">You must be within 30m of the classroom. After PIN verification, scan the QR code shown on screen.</p>
+              </div>
             </div>
 
             <button
               type="submit"
-              disabled={pin.length !== 4 || status === "verifying"}
+              disabled={pin.length !== 4 || status === "locating"}
               className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-white text-blue-900 rounded-xl font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.02] active:scale-[0.98] shadow-md"
             >
-              {status === "verifying" ? (
+              {status === "locating" ? (
                 <>
                   <div className="w-5 h-5 border-2 border-blue-900/30 border-t-blue-900 rounded-full animate-spin" />
-                  Verifying...
+                  Checking Location...
                 </>
               ) : (
                 <>
-                  Verify &amp; Check-in
+                  Verify Location &amp; Continue
                   <ArrowRight className="w-5 h-5" />
                 </>
               )}
