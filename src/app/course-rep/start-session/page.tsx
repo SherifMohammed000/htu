@@ -146,6 +146,20 @@ function StartSessionContent() {
         setActiveSession({ id, ...newSession });
         setQrToken(token);
         setLocationStatus("Location locked ✓");
+
+        // Automatically sign in the course rep
+        try {
+          await recordAttendance({
+            studentId: user.id,
+            sessionId: id,
+            timestamp: new Date().toISOString(),
+            status: "present",
+            method: "manual", // or "system" if you prefer
+          });
+        } catch (autoSignInErr) {
+          console.error("Failed to automatically sign in course rep:", autoSignInErr);
+        }
+
       } catch (e) {
         console.error(e);
         setLocationStatus("Failed to create session. Try again.");
@@ -171,9 +185,12 @@ function StartSessionContent() {
   // Stop session
   const stopSession = async () => {
     if (!sessionId) return;
+    setIsStarting(true); // repurpose loading state briefly
     await closeSession(sessionId);
     setActiveSession(null);
     setSessionId(null);
+    setIsStarting(false);
+    alert("Session ended successfully. The attendance report is now available on the lecturer's dashboard.");
   };
 
   // Copy PIN

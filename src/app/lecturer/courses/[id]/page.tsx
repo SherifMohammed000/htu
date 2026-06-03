@@ -24,6 +24,9 @@ import {
   Search,
   PenLine,
   Play,
+  Download,
+  FileText,
+  Sheet,
 } from "lucide-react";
 import Link from "next/link";
 import { QRCodeSVG as QRCode } from "qrcode.react";
@@ -54,6 +57,8 @@ export default function CourseSession({ params }: { params: Promise<{ id: string
   const [manualSearch, setManualSearch] = useState("");
   const [isManualModalOpen, setIsManualModalOpen] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
+  const [showDownloadModal, setShowDownloadModal] = useState(false);
+  const [isEnding, setIsEnding] = useState(false);
 
   const [allStudents, setAllStudents] = useState<StudentInfo[]>([]);
   const [studentNameMap, setStudentNameMap] = useState<Record<string, string>>({});
@@ -158,12 +163,75 @@ export default function CourseSession({ params }: { params: Promise<{ id: string
     }
   };
 
-  // Stop session
+  // Stop session — open download modal first
   const stopSession = async () => {
+    setShowDownloadModal(true);
+  };
+
+  const finalizeAndClose = async () => {
     if (!sessionId) return;
+    setIsEnding(true);
     await closeSession(sessionId);
+    setShowDownloadModal(false);
     setActiveSession(null);
     setSessionId(null);
+    setIsEnding(false);
+  };
+
+  const buildRows = () =>
+    attendanceRecords.map((r) => ({
+      name: studentNameMap[r.studentId] || r.studentId,
+      indexNumber: allStudents.find((s) => s.id === r.studentId)?.indexNumber ||
+                   allStudents.find((s) => s.id === r.studentId)?.studentId || "-",
+      method: r.method === "manual" ? "Manual" : "QR Scan",
+      time: new Date(r.timestamp).toLocaleTimeString(),
+      status: "Present",
+    }));
+
+  const downloadPdf = async () => {
+    const { jsPDF } = await import("jspdf");
+    const { default: autoTable } = await import("jspdf-autotable");
+    const doc = new jsPDF();
+    const rows = buildRows();
+    const date = activeSession?.sessionDate || new Date().toISOString().split("T")[0];
+    const title = `${course?.courseName ?? "Attendance"} — ${date}`;
+
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.text(title, 14, 18);
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Course: ${course?.courseCode ?? ""}   |   Total Present: ${rows.length}`, 14, 26);
+
+    autoTable(doc, {
+      startY: 32,
+      head: [["#", "Name", "Index No.", "Method", "Time", "Status"]],
+      body: rows.map((r, i) => [i + 1, r.name, r.indexNumber, r.method, r.time, r.status]),
+      styles: { fontSize: 9 },
+      headStyles: { fillColor: [30, 80, 200] },
+      alternateRowStyles: { fillColor: [240, 245, 255] },
+    });
+
+    doc.save(`attendance-${course?.courseCode ?? "session"}-${date}.pdf`);
+    await finalizeAndClose();
+  };
+
+  const downloadExcel = async () => {
+    const { unparse } = await import("papaparse");
+    const rows = buildRows();
+    const date = activeSession?.sessionDate || new Date().toISOString().split("T")[0];
+    const csv = unparse({
+      fields: ["Name", "Index Number", "Check-in Method", "Time", "Status"],
+      data: rows.map((r) => [r.name, r.indexNumber, r.method, r.time, r.status]),
+    });
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `attendance-${course?.courseCode ?? "session"}-${date}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    await finalizeAndClose();
   };
 
   // Copy PIN
@@ -407,7 +475,51 @@ export default function CourseSession({ params }: { params: Promise<{ id: string
               className="w-full flex items-center justify-center gap-2 py-4 bg-white text-blue-900 hover:bg-blue-50 rounded-2xl font-bold transition-all hover:scale-[1.01] active:scale-[0.99] shadow-lg"
             >
               <StopCircle className="w-6 h-6 text-blue-900" />
-              End Session &amp; Generate Report
+              End Session &amp; Download Report
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showDownloadModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
+          <div className="bg-gradient-to-br from-sky-400 via-blue-700 to-red-600 rounded-3xl border border-white/20 shadow-2xl w-full max-w-sm p-7 animate-in zoom-in-95 duration-200 text-white">
+            <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-5 border border-white/10">
+              <Download className="w-7 h-7 text-white" />
+            </div>
+            <h3 className="text-2xl font-extrabold text-center mb-1">Download Report</h3>
+            <p className="text-blue-100 text-sm text-center mb-2 font-semibold">
+              {attendanceRecords.length} student{attendanceRecords.length !== 1 ? "s" : ""} present
+            </p>
+            <p className="text-blue-200 text-xs text-center mb-6">
+              Choose a format to download the attendance report. The session will be closed after download.
+            </p>
+
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              <button
+                onClick={downloadPdf}
+                disabled={isEnding}
+                className="flex flex-col items-center gap-2.5 py-5 bg-white text-blue-900 rounded-2xl font-bold hover:bg-blue-50 transition-all hover:scale-105 active:scale-95 shadow-md disabled:opacity-60"
+              >
+                <FileText className="w-7 h-7" />
+                <span className="text-sm">PDF</span>
+              </button>
+              <button
+                onClick={downloadExcel}
+                disabled={isEnding}
+                className="flex flex-col items-center gap-2.5 py-5 bg-white text-blue-900 rounded-2xl font-bold hover:bg-blue-50 transition-all hover:scale-105 active:scale-95 shadow-md disabled:opacity-60"
+              >
+                <Sheet className="w-7 h-7" />
+                <span className="text-sm">Excel / CSV</span>
+              </button>
+            </div>
+
+            <button
+              onClick={finalizeAndClose}
+              disabled={isEnding}
+              className="w-full py-3 rounded-xl border border-white/20 text-white/70 hover:text-white text-sm font-semibold transition-colors"
+            >
+              {isEnding ? "Closing session..." : "Skip & Close Session"}
             </button>
           </div>
         </div>
