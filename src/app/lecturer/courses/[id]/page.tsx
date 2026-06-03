@@ -149,6 +149,7 @@ export default function CourseSession({ params }: { params: Promise<{ id: string
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
+            type: "session_start",
             courseId,
             courseName: course?.courseName || "",
             courseCode: course?.courseCode || "",
@@ -186,6 +187,22 @@ export default function CourseSession({ params }: { params: Promise<{ id: string
     if (!sessionId) return;
     setIsEnding(true);
     await closeSession(sessionId);
+
+    // Notify reps and lecturer that session has ended
+    fetch("/api/notifications", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        type: "session_end",
+        courseId,
+        courseName: course?.courseName || "",
+        courseCode: course?.courseCode || "",
+        endedByName: user?.fullName || "Lecturer",
+      }),
+    }).catch((err) => console.error("Error triggering session end notifications:", err));
+
     setShowDownloadModal(false);
     setActiveSession(null);
     setSessionId(null);

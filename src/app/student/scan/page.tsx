@@ -162,6 +162,19 @@ export default function StudentScan() {
         method: "qr",
       });
 
+      // Notify student that check-in was successful
+      fetch("/api/notifications", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          type: "checkin_success",
+          studentId: user.id,
+          courseId: verifiedSession.courseId,
+        }),
+      }).catch((err) => console.error("Error triggering check-in success notification:", err));
+
       setStatus("success");
     } catch (err: unknown) {
       setStatus("error");

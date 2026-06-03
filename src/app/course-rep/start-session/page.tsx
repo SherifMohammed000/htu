@@ -160,19 +160,35 @@ function StartSessionContent() {
           console.error("Failed to automatically sign in course rep:", autoSignInErr);
         }
 
-        // Notify enrolled students that class is starting
+        // 1. Notify enrolled students that class is starting
         fetch("/api/notifications", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
+            type: "session_start",
             courseId: selectedCourseId,
             courseName: selectedCourse?.courseName || "",
             courseCode: selectedCourse?.courseCode || "",
             lecturerName: user?.fullName || "",
           }),
-        }).catch((err) => console.error("Error triggering notifications:", err));
+        }).catch((err) => console.error("Error triggering student notifications:", err));
+
+        // 2. Notify the lecturer that rep has started the class
+        fetch("/api/notifications", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            type: "rep_session_start",
+            courseId: selectedCourseId,
+            courseName: selectedCourse?.courseName || "",
+            courseCode: selectedCourse?.courseCode || "",
+            repName: user?.fullName || "",
+          }),
+        }).catch((err) => console.error("Error triggering lecturer notification:", err));
 
       } catch (e) {
         console.error(e);
@@ -201,6 +217,22 @@ function StartSessionContent() {
     if (!sessionId) return;
     setIsStarting(true); // repurpose loading state briefly
     await closeSession(sessionId);
+
+    // Notify rep and lecturer that session has ended
+    fetch("/api/notifications", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        type: "session_end",
+        courseId: selectedCourseId,
+        courseName: selectedCourse?.courseName || "",
+        courseCode: selectedCourse?.courseCode || "",
+        endedByName: user?.fullName || "Course Representative",
+      }),
+    }).catch((err) => console.error("Error triggering session end notifications:", err));
+
     setActiveSession(null);
     setSessionId(null);
     setIsStarting(false);
