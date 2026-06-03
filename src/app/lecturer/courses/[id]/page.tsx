@@ -294,12 +294,18 @@ export default function CourseSession({ params }: { params: Promise<{ id: string
   };
 
   const presentStudentIds = new Set(attendanceRecords.map((r) => r.studentId));
-  const filteredStudents = allStudents.filter(
-    (s) =>
-      !presentStudentIds.has(s.id) &&
-      (s.fullName.toLowerCase().includes(manualSearch.toLowerCase()) ||
-        (s.indexNumber || s.studentId || "").toLowerCase().includes(manualSearch.toLowerCase()))
-  );
+  const filteredStudents = allStudents.filter((s) => {
+    if (presentStudentIds.has(s.id)) return false;
+    
+    const searchClean = manualSearch.replace(/\s+/g, "").toLowerCase();
+    if (!searchClean) return true;
+
+    const nameMatch = s.fullName.replace(/\s+/g, "").toLowerCase().includes(searchClean);
+    const indexStr = (s.indexNumber || s.studentId || "").replace(/\s+/g, "").toLowerCase();
+    const indexMatch = indexStr.includes(searchClean);
+
+    return nameMatch || indexMatch;
+  });
 
   const getStudentDisplay = (studentId: string) => {
     const name = studentNameMap[studentId];
