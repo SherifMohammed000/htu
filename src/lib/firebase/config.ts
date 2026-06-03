@@ -1,7 +1,8 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore, initializeFirestore } from "firebase/firestore";
-import { getAnalytics, isSupported } from "firebase/analytics";
+import { getAnalytics, isSupported as isAnalyticsSupported } from "firebase/analytics";
+import { getMessaging, isSupported as isMessagingSupported } from "firebase/messaging";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -28,14 +29,22 @@ try {
   db = getFirestore(app);
 }
 
-// Initialize Analytics safely (only runs in browser environment)
+// Initialize Analytics & Messaging safely (only runs in browser environment)
 let analytics;
+let messaging: any;
+
 if (typeof window !== "undefined") {
-  isSupported().then((supported) => {
+  isAnalyticsSupported().then((supported) => {
     if (supported) {
       analytics = getAnalytics(app);
     }
   });
+
+  isMessagingSupported().then((supported) => {
+    if (supported) {
+      messaging = getMessaging(app);
+    }
+  });
 }
 
-export { app, auth, db, analytics };
+export { app, auth, db, analytics, messaging };

@@ -141,6 +141,20 @@ export default function CourseSession({ params }: { params: Promise<{ id: string
         setActiveSession({ id, ...newSession });
         setQrToken(token);
         setLocationStatus("Location locked ✓");
+
+        // Notify enrolled students that class is starting
+        fetch("/api/notifications", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            courseId,
+            courseName: course?.courseName || "",
+            courseCode: course?.courseCode || "",
+            lecturerName: user?.fullName || "",
+          }),
+        }).catch((err) => console.error("Error triggering notifications:", err));
       } catch (e) {
         console.error(e);
         setLocationStatus("Failed to create session. Try again.");

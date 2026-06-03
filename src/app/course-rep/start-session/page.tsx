@@ -160,6 +160,20 @@ function StartSessionContent() {
           console.error("Failed to automatically sign in course rep:", autoSignInErr);
         }
 
+        // Notify enrolled students that class is starting
+        fetch("/api/notifications", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            courseId: selectedCourseId,
+            courseName: selectedCourse?.courseName || "",
+            courseCode: selectedCourse?.courseCode || "",
+            lecturerName: user?.fullName || "",
+          }),
+        }).catch((err) => console.error("Error triggering notifications:", err));
+
       } catch (e) {
         console.error(e);
         setLocationStatus("Failed to create session. Try again.");

@@ -4,13 +4,15 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { getLecturerCourses } from "@/lib/firebase/firestore";
 import { Course } from "@/lib/mock/db";
-import { Users, Clock, TrendingUp, Play, ChevronRight, BookOpen } from "lucide-react";
+import { Users, Clock, TrendingUp, Play, ChevronRight, BookOpen, Bell } from "lucide-react";
 import Link from "next/link";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 
 export default function LecturerDashboard() {
   const { user } = useAuth();
+  const { permission, isSupported, requestPermission } = usePushNotifications();
   const [courses, setCourses] = useState<Course[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [stats, setStats] = useState({ totalStudents: 0, avgAttendance: 0, classesThisWeek: 0 });
@@ -72,6 +74,31 @@ export default function LecturerDashboard() {
           </p>
         </div>
       </div>
+
+      {/* Push Notifications Alert Banner */}
+      {isSupported && permission === "default" && (
+        <div className="bg-gradient-to-r from-blue-600/30 to-indigo-600/30 backdrop-blur-md border border-white/20 rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-white shadow-xl animate-in fade-in slide-in-from-top-4 duration-500">
+          <div className="flex items-start gap-4">
+            <div className="bg-white/10 p-3 rounded-xl border border-white/10 text-white mt-1 sm:mt-0">
+              <Bell className="w-6 h-6 animate-bounce" />
+            </div>
+            <div>
+              <h3 className="font-bold text-white text-base">
+                Enable Push Notifications
+              </h3>
+              <p className="text-blue-100 text-sm mt-0.5 leading-relaxed">
+                Stay updated! Receive real-time alerts on your device for active class events.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={requestPermission}
+            className="inline-flex items-center justify-center px-5 py-2.5 bg-white text-blue-900 font-bold rounded-xl hover:bg-blue-50 transition-all hover:scale-105 active:scale-95 shadow-md cursor-pointer shrink-0"
+          >
+            Allow Alerts
+          </button>
+        </div>
+      )}
 
       {/* Stats row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
