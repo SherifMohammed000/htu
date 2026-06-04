@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { getAuth } from 'firebase/auth';
 import { db } from '@/lib/firebase/config';
 import { collection, doc, setDoc } from 'firebase/firestore';
@@ -15,6 +16,7 @@ export const FaceCapture = () => {
   const [preview, setPreview] = useState<string>('');
   const [uploading, setUploading] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const router = useRouter();
 
   const startCamera = async () => {
     if (!navigator.mediaDevices?.getUserMedia) return;
@@ -53,7 +55,8 @@ export const FaceCapture = () => {
       const err = await resp.text();
       alert('Upload failed: ' + err);
     } else {
-      alert('Face image saved successfully');
+      // Refresh to update the auth context or redirect directly
+      router.push('/student/dashboard');
     }
     setUploading(false);
   };

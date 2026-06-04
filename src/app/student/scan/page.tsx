@@ -31,6 +31,7 @@ export default function StudentScan() {
   const [errorMessage, setErrorMessage] = useState("");
   const [verifiedSession, setVerifiedSession] = useState<AttendanceSession | null>(null);
   const [studentCoords, setStudentCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [timeLeft, setTimeLeft] = useState(10);
   const qrRegionRef = useRef<HTMLDivElement>(null);
   const scannerRef = useRef<any>(null);
 
@@ -100,6 +101,26 @@ export default function StudentScan() {
       doLocate(0, 0);
     }
   };
+
+  // 10-second timeout for QR scanning after liveness detection
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (status === "scanning") {
+      setTimeLeft(10);
+      timer = setInterval(() => {
+        setTimeLeft((prev) => {
+          if (prev <= 1) {
+            setStatus("verifying_face");
+            return 10;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } else {
+      setTimeLeft(10);
+    }
+    return () => clearInterval(timer);
+  }, [status]);
 
   // Step 2: Start QR scanner after location verified
   useEffect(() => {
@@ -232,6 +253,7 @@ export default function StudentScan() {
           </div>
           <h1 className="text-3xl font-extrabold text-white drop-shadow-md">Scan QR Code</h1>
           <p className="text-blue-100 mt-2 font-medium">Point your camera at the QR code on the screen.</p>
+          <p className="text-red-400 font-bold mt-1 text-sm animate-pulse">Time remaining: {timeLeft}s</p>
         </div>
 
         {status === "submitting" ? (
