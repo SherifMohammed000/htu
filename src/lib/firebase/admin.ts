@@ -8,10 +8,18 @@ export function getFirebaseAdmin() {
     return admin;
   }
 
-  const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID;
-  const clientEmail = process.env.FIREBASE_ADMIN_CLIENT_EMAIL;
-  // Vercel stores newlines as literal \n in env vars — replace them back
-  const privateKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY?.replace(/\\n/g, '\n');
+  const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID?.trim();
+  const clientEmail = process.env.FIREBASE_ADMIN_CLIENT_EMAIL?.trim();
+  
+  let privateKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY?.trim();
+  if (privateKey) {
+    if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
+      privateKey = privateKey.slice(1, -1);
+    } else if (privateKey.startsWith("'") && privateKey.endsWith("'")) {
+      privateKey = privateKey.slice(1, -1);
+    }
+    privateKey = privateKey.replace(/\\n/g, '\n').trim();
+  }
 
   if (!projectId || !clientEmail || !privateKey) {
     throw new Error(
