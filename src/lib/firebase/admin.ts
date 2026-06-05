@@ -34,9 +34,20 @@ export function getFirebaseAdmin() {
     });
     initialized = true;
     console.log('Firebase Admin SDK initialized successfully.');
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error initializing Firebase Admin SDK:', error);
-    throw error;
+    const diag = {
+      length: privateKey?.length,
+      startsWithBegin: privateKey?.startsWith('-----BEGIN PRIVATE KEY-----'),
+      endsWithEnd: privateKey?.endsWith('-----END PRIVATE KEY-----'),
+      containsNewline: privateKey?.includes('\n'),
+      containsEscapedNewline: privateKey?.includes('\\n'),
+      first30: privateKey?.substring(0, 30),
+      last30: privateKey?.substring(privateKey.length - 30)
+    };
+    throw new Error(
+      `Failed to parse private key: ${error.message}. Diag: len=${diag.length}, begin=${diag.startsWithBegin}, end=${diag.endsWithEnd}, nl=${diag.containsNewline}, escNl=${diag.containsEscapedNewline}, first30='${diag.first30}', last30='${diag.last30}'`
+    );
   }
 
   return admin;
