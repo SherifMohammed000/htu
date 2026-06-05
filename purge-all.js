@@ -1,9 +1,77 @@
 const admin = require("firebase-admin");
-const serviceAccount = require("./service-account.json");
+const fs = require("fs");
+const path = require("path");
 
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-});
+let initialized = false;
+
+try {
+  const envPath = path.join(__dirname, ".env.local");
+  if (fs.existsSync(envPath)) {
+    const envContent = fs.readFileSync(envPath, "utf8");
+    let projectId, clientEmail, privateKey;
+    
+    envContent.split(/\r?\n/).forEach((line) => {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith("#")) return;
+      const index = trimmed.indexOf("=");
+      if (index === -1) return;
+      const key = trimmed.substring(0, index).trim();
+      let value = trimmed.substring(index + 1).trim();
+      if (value.startsWith('"') && value.endsWith('"')) {
+        value = value.slice(1, -1);
+      }
+      
+      if (key === "FIREBASE_ADMIN_PROJECT_ID") projectId = value;
+      if (key === "FIREBASE_ADMIN_CLIENT_EMAIL") clientEmail = value;
+      if (key === "FIREBASE_ADMIN_PRIVATE_KEY") {
+        privateKey = value.replace(/\\n/g, "\n");
+      }
+    });
+
+    if (projectId && clientEmail && privateKey) {
+      admin.initializeApp({
+        credential: admin.credential.cert({ projectId, clientEmail, privateKey }),
+      });
+      initialized = true;
+      console.log("✓ Initialized Firebase Admin from .env.local");
+    }
+  }
+} catch (e) {
+  console.warn("Failed to load/parse .env.local:", e.message);
+}
+
+if (!initialized) {
+  const possiblePaths = [
+    "./service-account.json",
+    "./service-account.json.json"
+  ];
+  let saFile = null;
+  for (const saPath of possiblePaths) {
+    const absolutePath = path.join(__dirname, saPath);
+    if (fs.existsSync(absolutePath)) {
+      saFile = absolutePath;
+      break;
+    }
+  }
+  
+  if (saFile) {
+    try {
+      const serviceAccount = require(saFile);
+      admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+      });
+      initialized = true;
+      console.log(`✓ Initialized Firebase Admin from ${path.basename(saFile)}`);
+    } catch (e) {
+      console.error(`Failed to load ${saFile}:`, e.message);
+    }
+  }
+}
+
+if (!initialized) {
+  console.error("❌ Could not initialize Firebase Admin SDK. Please configure .env.local or add service-account.json");
+  process.exit(1);
+}
 
 const db = admin.firestore();
 const auth = admin.auth();
