@@ -11,7 +11,7 @@ import {
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, collection, query, where, getDocs, updateDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase/config';
-import { User } from '@/lib/mock/db';
+import { User, Role } from '@/lib/mock/db';
 
 interface AuthContextType {
   user: User | null;
@@ -85,13 +85,82 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setUser(finalUser);
           } else {
             // Fallback: build a basic user from Firebase Auth data
-            setUser({
+            const email = fbUser.email || '';
+            const isStudent = email.endsWith('@student.htu.edu');
+            const isLecturer = email.endsWith('@lecturer.htu.edu');
+            const indexOrCode = email.split('@')[0] || '';
+            
+            let resolvedName = fbUser.displayName || indexOrCode || 'Unknown';
+            let role: Role = 'student';
+            let stream = "";
+            let indexNumber = "";
+            let courseCode = "";
+
+            if (isLecturer) {
+              role = 'lecturer';
+              courseCode = indexOrCode.toUpperCase();
+            } else if (isStudent) {
+              indexNumber = indexOrCode;
+              const reps = ["0324080539", "0324080114"];
+              role = reps.includes(indexNumber.replace(/\s+/g, "")) ? "course_rep" : "student";
+            }
+
+            // Build the fallback user
+            const fallbackUser: User = {
               id: fbUser.uid,
-              fullName: fbUser.displayName || fbUser.email?.split('@')[0] || 'Unknown',
-              email: fbUser.email || '',
+              fullName: resolvedName,
+              email,
               department: '',
-              role: 'student',
-            });
+              role,
+            };
+            if (indexNumber) fallbackUser.indexNumber = indexNumber;
+            if (courseCode) fallbackUser.courseCode = courseCode;
+
+            setUser(fallbackUser);
+
+            // Self-heal: auto-create the missing Firestore profile on the fly
+            if (isStudent && indexNumber) {
+              (async () => {
+                try {
+                  const studentQuery = query(collection(db, "students"), where("indexNumber", "==", indexNumber));
+                  const studentSnap = await getDocs(studentQuery);
+                  if (!studentSnap.empty) {
+                    const studentData = studentSnap.docs[0].data();
+                    resolvedName = studentData.name || resolvedName;
+                    stream = studentData.stream || "";
+                  }
+                  
+                  await setDoc(doc(db, 'users', fbUser.uid), {
+                    id: fbUser.uid,
+                    indexNumber,
+                    fullName: resolvedName,
+                    email,
+                    role,
+                    stream,
+                    createdAt: new Date().toISOString()
+                  });
+                  
+                  setUser({ ...fallbackUser, fullName: resolvedName, stream });
+                } catch (e) {
+                  console.error("Failed to auto-create missing student profile:", e);
+                }
+              })();
+            } else if (isLecturer && courseCode) {
+              (async () => {
+                try {
+                  await setDoc(doc(db, 'users', fbUser.uid), {
+                    id: fbUser.uid,
+                    courseCode,
+                    fullName: resolvedName,
+                    email,
+                    role: 'lecturer',
+                    createdAt: new Date().toISOString()
+                  });
+                } catch (e) {
+                  console.error("Failed to auto-create missing lecturer profile:", e);
+                }
+              })();
+            }
           }
         } catch (e) {
           console.error('Error fetching user profile:', e);
