@@ -139,7 +139,7 @@ export default function LecturerSettingsPage() {
                       required
                       value={studentIndex}
                       onChange={(e) => setStudentIndex(e.target.value)}
-                      placeholder="e.g. 0324080252"
+                      placeholder="e.g. 0102030405"
                       className="block w-full rounded-xl border border-white/20 px-4 py-3 text-white bg-black/20 placeholder-white/40 focus:border-white focus:outline-none focus:ring-2 focus:ring-white/30 transition-all font-medium uppercase"
                     />
                   </div>

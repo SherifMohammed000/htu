@@ -399,7 +399,7 @@ export default function Home() {
                     value={identifier}
                     onChange={(e) => setIdentifier(e.target.value)}
                     className="block w-full rounded-xl border border-white/20 px-4 py-3 text-white bg-black/20 placeholder-white/50 focus:border-white focus:outline-none focus:ring-2 focus:ring-white/30 transition-all font-semibold"
-                    placeholder="e.g. 0324080252 or CS301"
+                    placeholder="e.g. 0102030405 or CS999"
                   />
                 </div>
 
@@ -507,7 +507,7 @@ export default function Home() {
                       }
                     }}
                     className="block w-full rounded-xl border border-white/20 px-4 py-3 text-white bg-black/20 placeholder-white/50 focus:border-white focus:outline-none focus:ring-2 focus:ring-white/30 transition-all font-semibold"
-                    placeholder="e.g. 0324080252 or CS301"
+                    placeholder="e.g. 0102030405 or CS999"
                   />
                 </div>
 
@@ -528,7 +528,7 @@ export default function Home() {
                     }}
                     onFocus={() => setShowSuggestions(true)}
                     className="block w-full rounded-xl border border-white/20 px-4 py-3 text-white bg-black/20 placeholder-white/50 focus:border-white focus:outline-none focus:ring-2 focus:ring-white/30 transition-all font-semibold"
-                    placeholder="e.g. KOFI BISMARK ADDAE or Dr. Amina"
+                    placeholder="e.g. John Doe or Dr. Jane Smith"
                   />
                   
                   {showSuggestions && filteredStudents.length > 0 && (
