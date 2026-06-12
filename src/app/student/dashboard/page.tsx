@@ -198,28 +198,6 @@ export default function StudentDashboard() {
         </div>
       </div>
 
-      {/* Face Verification notice */}
-      <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-white shadow-xl">
-        <div className="flex items-start gap-4">
-          <div className="bg-white/15 p-3 rounded-xl border border-white/10 text-white mt-1 sm:mt-0">
-            <ScanLine className="w-6 h-6" />
-          </div>
-          <div>
-            <h3 className="font-bold text-white text-base">
-              Face Verification Setup
-            </h3>
-            <p className="text-blue-100 text-sm mt-0.5 leading-relaxed">
-              Before scanning QR codes, you must capture a reference photo of your face for identity verification.
-            </p>
-          </div>
-        </div>
-        <Link
-          href="/student/activation"
-          className="inline-flex items-center justify-center px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl transition-all shadow-md shrink-0"
-        >
-          Setup Now
-        </Link>
-      </div>
     </div>
   );
 }

@@ -8,7 +8,6 @@ import { db } from "@/lib/firebase/config";
 import { AttendanceSession } from "@/lib/mock/db";
 import { MapPin, CheckCircle, AlertTriangle, ArrowRight, QrCode, ShieldCheck, Scan } from "lucide-react";
 import Link from "next/link";
-import { FaceVerifyModal } from "@/components/FaceVerifyModal";
 
 // Haversine formula — returns distance in metres
 function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
@@ -22,7 +21,7 @@ function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: numbe
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-type PageStatus = "idle" | "locating" | "verifying_face" | "scanning" | "submitting" | "success" | "error";
+type PageStatus = "idle" | "locating" | "scanning" | "submitting" | "success" | "error";
 
 export default function StudentScan() {
   const { user } = useAuth();
@@ -31,7 +30,6 @@ export default function StudentScan() {
   const [errorMessage, setErrorMessage] = useState("");
   const [verifiedSession, setVerifiedSession] = useState<AttendanceSession | null>(null);
   const [studentCoords, setStudentCoords] = useState<{ lat: number; lng: number } | null>(null);
-  const [timeLeft, setTimeLeft] = useState(10);
   const qrRegionRef = useRef<HTMLDivElement>(null);
   const scannerRef = useRef<any>(null);
 
@@ -78,10 +76,10 @@ export default function StudentScan() {
           }
         }
 
-        // PIN valid + within radius → verify face first
+        // PIN valid + within radius → go to scanning QR code
         setVerifiedSession(session);
         setStudentCoords({ lat, lng });
-        setStatus("verifying_face");
+        setStatus("scanning");
       } catch (err: unknown) {
         setStatus("error");
         setErrorMessage(err instanceof Error ? err.message : "An error occurred. Please try again.");
@@ -102,25 +100,7 @@ export default function StudentScan() {
     }
   };
 
-  // 10-second timeout for QR scanning after liveness detection
-  useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (status === "scanning") {
-      setTimeLeft(10);
-      timer = setInterval(() => {
-        setTimeLeft((prev) => {
-          if (prev <= 1) {
-            setStatus("verifying_face");
-            return 10;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    } else {
-      setTimeLeft(10);
-    }
-    return () => clearInterval(timer);
-  }, [status]);
+  // Scanner cleanup and setup handled below
 
   // Step 2: Start QR scanner after location verified
   useEffect(() => {
@@ -223,25 +203,7 @@ export default function StudentScan() {
     );
   }
 
-  // ── FACE VERIFICATION STEP ──
-  if (status === "verifying_face" && verifiedSession) {
-    return (
-      <FaceVerifyModal
-        sessionId={verifiedSession.id}
-        onSuccess={() => setStatus("scanning")}
-        onFailure={() => {
-          setStatus("error");
-          setErrorMessage("Face verification failed after 3 attempts. You have been marked absent for this session.");
-          setVerifiedSession(null);
-        }}
-        onCancel={() => {
-          setStatus("idle");
-          setVerifiedSession(null);
-          setPin("");
-        }}
-      />
-    );
-  }
+  // Face verification step removed
 
   // ── QR SCANNER STEP ──
   if (status === "scanning" || status === "submitting") {
@@ -253,7 +215,6 @@ export default function StudentScan() {
           </div>
           <h1 className="text-3xl font-extrabold text-white drop-shadow-md">Scan QR Code</h1>
           <p className="text-blue-100 mt-2 font-medium">Point your camera at the QR code on the screen.</p>
-          <p className="text-red-400 font-bold mt-1 text-sm animate-pulse">Time remaining: {timeLeft}s</p>
         </div>
 
         {status === "submitting" ? (
