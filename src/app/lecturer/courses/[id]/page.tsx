@@ -11,6 +11,7 @@ import {
   getLecturerCourses,
   recordAttendance,
   getUsersByRole,
+  deleteAttendanceRecord,
 } from "@/lib/firebase/firestore";
 import {
   ArrowLeft,
@@ -27,6 +28,7 @@ import {
   Download,
   FileText,
   Sheet,
+  Trash2,
 } from "lucide-react";
 import Link from "next/link";
 import { QRCodeSVG as QRCode } from "qrcode.react";
@@ -292,6 +294,16 @@ export default function CourseSession({ params }: { params: Promise<{ id: string
     }
   };
 
+  // Remove attendance record
+  const handleRemoveAttendance = async (recordId: string) => {
+    if (!window.confirm("Are you sure you want to remove this student's attendance for this session?")) return;
+    try {
+      await deleteAttendanceRecord(recordId);
+    } catch (e: unknown) {
+      if (e instanceof Error) alert("Failed to remove attendance: " + e.message);
+    }
+  };
+
   // QR rotation + duration timer
   useEffect(() => {
     if (!activeSession || !sessionId) return;
@@ -483,14 +495,25 @@ export default function CourseSession({ params }: { params: Promise<{ id: string
                 </p>
                 <div className="space-y-2">
                   {attendanceRecords.map((r) => (
-                    <div key={r.id} className="flex items-center gap-3 text-sm">
-                      <UserCheck className="w-4 h-4 text-white shrink-0" />
-                      <span className="text-white font-semibold truncate">
-                        {getStudentDisplay(r.studentId)}
-                      </span>
-                      <span className="ml-auto text-xs text-blue-200 font-bold bg-white/10 px-2 py-0.5 rounded border border-white/10 shrink-0">
-                        {r.method === "manual" ? "Manual" : "QR"}
-                      </span>
+                    <div key={r.id} className="flex items-center justify-between gap-3 text-sm">
+                      <div className="flex items-center gap-3 truncate">
+                        <UserCheck className="w-4 h-4 text-white shrink-0" />
+                        <span className="text-white font-semibold truncate">
+                          {getStudentDisplay(r.studentId)}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className="text-xs text-blue-200 font-bold bg-white/10 px-2 py-0.5 rounded border border-white/10">
+                          {r.method === "manual" ? "Manual" : "QR"}
+                        </span>
+                        <button
+                          onClick={() => handleRemoveAttendance(r.id)}
+                          className="p-1 hover:bg-red-500/20 rounded text-red-300 hover:text-red-100 transition-colors"
+                          title="Remove Attendance"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>

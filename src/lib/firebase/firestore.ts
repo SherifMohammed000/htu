@@ -12,6 +12,7 @@ import {
   serverTimestamp,
   addDoc,
   orderBy,
+  deleteDoc,
 } from 'firebase/firestore';
 import { db } from './config';
 import { AttendanceSession, AttendanceRecord, Course, User } from '@/lib/mock/db';
@@ -127,6 +128,10 @@ export async function getSessionAttendance(sessionId: string): Promise<Attendanc
   );
   const snap = await getDocs(q);
   return snap.docs.map(d => ({ id: d.id, ...d.data() } as AttendanceRecord));
+}
+
+export async function deleteAttendanceRecord(recordId: string): Promise<void> {
+  await deleteDoc(doc(db, 'attendance_records', recordId));
 }
 
 // ─── Users ─────────────────────────────────────────────────────────────────
