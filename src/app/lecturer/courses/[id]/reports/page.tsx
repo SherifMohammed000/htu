@@ -57,27 +57,23 @@ export default function CourseReports({ params }: { params: Promise<{ id: string
         );
         const sessionsSnap = await getDocs(sessionsQuery);
         
-        const sessionsData: SessionReport[] = [];
-
-        // For each session, fetch its attendance records
-        for (const doc of sessionsSnap.docs) {
-          const session = { id: doc.id, ...doc.data() } as AttendanceSession;
-          
-          const recordsQuery = query(
-            collection(db, "attendance_records"),
-            where("sessionId", "==", session.id),
-            where("status", "==", "present")
-          );
-          const recordsSnap = await getDocs(recordsQuery);
-          
-          const records = recordsSnap.docs.map(r => ({ id: r.id, ...r.data() } as AttendanceRecord));
-
-          sessionsData.push({
-            ...session,
-            totalPresent: records.length,
-            records,
-          });
-        }
+        const sessionsData = await Promise.all(
+          sessionsSnap.docs.map(async (doc) => {
+            const session = { id: doc.id, ...doc.data() } as AttendanceSession;
+            const recordsQuery = query(
+              collection(db, "attendance_records"),
+              where("sessionId", "==", session.id),
+              where("status", "==", "present")
+            );
+            const recordsSnap = await getDocs(recordsQuery);
+            const records = recordsSnap.docs.map(r => ({ id: r.id, ...r.data() } as AttendanceRecord));
+            return {
+              ...session,
+              totalPresent: records.length,
+              records,
+            };
+          })
+        );
 
         // Sort sessions by date descending
         sessionsData.sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime());

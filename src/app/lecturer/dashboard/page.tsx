@@ -34,12 +34,13 @@ export default function LecturerDashboard() {
       let totalRecords = 0;
       let totalSessions = sessionsSnap.size;
 
-      for (const sid of sessionIds) {
-        const recSnap = await getDocs(
-          query(collection(db, "attendance_records"), where("sessionId", "==", sid), where("status", "==", "present"))
-        );
-        totalRecords += recSnap.size;
-      }
+      const recordPromises = sessionIds.map(sid =>
+        getDocs(query(collection(db, "attendance_records"), where("sessionId", "==", sid), where("status", "==", "present")))
+      );
+      const recordSnaps = await Promise.all(recordPromises);
+      recordSnaps.forEach(snap => {
+        totalRecords += snap.size;
+      });
 
       // Sessions this week
       const weekAgo = new Date();

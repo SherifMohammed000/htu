@@ -37,14 +37,16 @@ export default function CourseRepDashboard() {
       const myRecords = await getStudentAttendance(user.id);
       setRecords(myRecords);
 
-      // Count sessions per course
+      // Count sessions per course in parallel
       const counts: Record<string, number> = {};
-      for (const course of allCourses) {
-        const sessionsSnap = await getDocs(
-          query(collection(db, "sessions"), where("courseId", "==", course.id))
-        );
-        counts[course.id] = sessionsSnap.size;
-      }
+      await Promise.all(
+        allCourses.map(async (course) => {
+          const sessionsSnap = await getDocs(
+            query(collection(db, "sessions"), where("courseId", "==", course.id))
+          );
+          counts[course.id] = sessionsSnap.size;
+        })
+      );
       setSessionCounts(counts);
 
       setIsLoading(false);

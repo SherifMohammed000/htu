@@ -44,26 +44,26 @@ export default function AttendancePage() {
         query(collection(db, "sessions"), where("courseId", "==", selectedCourseId))
       );
 
-      const sessionsData: SessionWithRecords[] = [];
+      const sessionsData = await Promise.all(
+        sessionsSnap.docs.map(async (doc) => {
+          const sessionData = doc.data();
+          const recordsSnap = await getDocs(
+            query(collection(db, "attendance_records"), where("sessionId", "==", doc.id))
+          );
+          const records = recordsSnap.docs.map((r) => ({
+            id: r.id,
+            ...r.data(),
+          })) as AttendanceRecord[];
 
-      for (const doc of sessionsSnap.docs) {
-        const sessionData = doc.data();
-        const recordsSnap = await getDocs(
-          query(collection(db, "attendance_records"), where("sessionId", "==", doc.id))
-        );
-        const records = recordsSnap.docs.map((r) => ({
-          id: r.id,
-          ...r.data(),
-        })) as AttendanceRecord[];
-
-        sessionsData.push({
-          id: doc.id,
-          courseId: sessionData.courseId,
-          sessionDate: sessionData.sessionDate,
-          startTime: sessionData.startTime,
-          records,
-        });
-      }
+          return {
+            id: doc.id,
+            courseId: sessionData.courseId,
+            sessionDate: sessionData.sessionDate,
+            startTime: sessionData.startTime,
+            records,
+          };
+        })
+      );
 
       sessionsData.sort(
         (a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime()

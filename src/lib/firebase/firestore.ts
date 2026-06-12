@@ -156,9 +156,11 @@ export async function getLecturerSummary(lecturerId: string): Promise<Array<{stu
 
   // 3. Accumulate attendance per student
   const stats: Record<string, {present:number, absent:number, totalSessions:number}> = {};
-  // For each session, get its attendance
-  for (const sid of sessionIds) {
-    const records = await getSessionAttendance(sid);
+  // For each session, get its attendance in parallel
+  const recordsPromises = sessionIds.map(sid => getSessionAttendance(sid));
+  const allRecords = await Promise.all(recordsPromises);
+
+  allRecords.forEach((records) => {
     // Mark present
     records.forEach(r => {
       if (!stats[r.studentId]) stats[r.studentId] = {present:0, absent:0, totalSessions:0};
@@ -175,7 +177,7 @@ export async function getLecturerSummary(lecturerId: string): Promise<Array<{stu
     });
     // Increment totalSessions for every student (present or absent) for this session
     students.forEach(s=>{ if (!stats[s.id]) stats[s.id] = {present:0, absent:0, totalSessions:0}; stats[s.id].totalSessions++; });
-  }
+  });
 
   // 4. Build result array
   return Object.entries(stats).map(([id, val]) => ({
