@@ -10,6 +10,7 @@ export interface User {
   department: string;
   level?: string;       // For students
   deviceId?: string;    // For device verification
+  stream?: string;      // For students
   role: Role;
 }
 
@@ -34,6 +35,7 @@ export interface AttendanceSession {
     lng: number;
   };
   status: 'active' | 'closed';
+  targetStream?: 'A' | 'B' | 'both';
 }
 
 export interface AttendanceRecord {

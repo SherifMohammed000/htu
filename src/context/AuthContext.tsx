@@ -38,7 +38,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         try {
           const userDoc = await getDoc(doc(db, 'users', fbUser.uid));
           if (userDoc.exists()) {
-            setUser({ id: fbUser.uid, ...userDoc.data() } as User);
+            const userData = userDoc.data();
+            let finalUser = { id: fbUser.uid, ...userData } as User;
+
+            if (finalUser.role === 'student' && !finalUser.stream && finalUser.indexNumber) {
+              try {
+                const studentQuery = query(collection(db, "students"), where("indexNumber", "==", finalUser.indexNumber));
+                const studentSnap = await getDocs(studentQuery);
+                if (!studentSnap.empty) {
+                  const resolvedStream = studentSnap.docs[0].data().stream || "";
+                  if (resolvedStream) {
+                    await updateDoc(doc(db, 'users', fbUser.uid), { stream: resolvedStream });
+                    finalUser.stream = resolvedStream;
+                  }
+                }
+              } catch (e) {
+                console.error("Error resolving missing stream on load:", e);
+              }
+            }
+
+            setUser(finalUser);
           } else {
             // Fallback: build a basic user from Firebase Auth data
             setUser({
@@ -91,6 +110,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const reps = ["0324080539", "0324080114"];
       const role = reps.includes(indexNumber.replace(/\s+/g, "")) ? "course_rep" : "student";
 
+      // Fetch stream from students collection
+      let stream = "";
+      try {
+        const studentQuery = query(collection(db, "students"), where("indexNumber", "==", indexNumber));
+        const studentSnap = await getDocs(studentQuery);
+        if (!studentSnap.empty) {
+          stream = studentSnap.docs[0].data().stream || "";
+        }
+      } catch (e) {
+        console.error("Failed to fetch stream during registration:", e);
+      }
+
       // Create user profile in Firestore
       await setDoc(doc(db, 'users', userCredential.user.uid), {
         id: userCredential.user.uid,
@@ -99,6 +130,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email,
         role: role,
         ipAddress,
+        stream,
         createdAt: new Date().toISOString()
       });
     } catch (err) {

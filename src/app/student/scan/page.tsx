@@ -59,6 +59,23 @@ export default function StudentScan() {
         const sessionDoc = snap.docs[0];
         const session = { id: sessionDoc.id, ...sessionDoc.data() } as AttendanceSession;
 
+        // Stream validation check
+        const sessionTarget = session.targetStream || "both";
+        if (sessionTarget !== "both") {
+          const studentStream = user?.stream || "";
+          
+          const cleanStudentStream = studentStream.replace(/stream/i, "").trim().toUpperCase();
+          const cleanTargetStream = sessionTarget.replace(/stream/i, "").trim().toUpperCase();
+
+          if (cleanStudentStream !== cleanTargetStream) {
+            setStatus("error");
+            setErrorMessage(
+              `This session is only open to Stream ${cleanTargetStream}. Your profile is registered under Stream ${cleanStudentStream || "Unknown"}.`
+            );
+            return;
+          }
+        }
+
         // Geofencing check — mandatory if session has a real location
         if (session.location.lat !== 0 && session.location.lng !== 0) {
           if (lat === 0) {

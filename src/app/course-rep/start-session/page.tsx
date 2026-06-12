@@ -58,6 +58,7 @@ function StartSessionContent() {
   const [manualSearch, setManualSearch] = useState("");
   const [isManualModalOpen, setIsManualModalOpen] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
+  const [selectedStream, setSelectedStream] = useState<'A' | 'B' | 'both'>('both');
   const [isLoadingCourses, setIsLoadingCourses] = useState(true);
   const [allStudents, setAllStudents] = useState<StudentInfo[]>([]);
   const [studentNameMap, setStudentNameMap] = useState<Record<string, string>>({});
@@ -138,6 +139,7 @@ function StartSessionContent() {
         pinCode: pin,
         location: { lat, lng },
         status: "active",
+        targetStream: selectedStream,
       };
 
       try {
@@ -389,6 +391,29 @@ function StartSessionContent() {
             Your GPS location will be locked as the classroom reference point. Students must be
             within 30 meters to check in.
           </p>
+          {/* Stream Selector */}
+          <div className="mb-8 max-w-xs mx-auto">
+            <label className="block text-sm font-bold text-blue-100 mb-3">
+              Target Stream
+            </label>
+            <div className="grid grid-cols-3 gap-2 bg-white/5 p-1 rounded-xl border border-white/10">
+              {(["both", "A", "B"] as const).map((stream) => (
+                <button
+                  key={stream}
+                  type="button"
+                  onClick={() => setSelectedStream(stream)}
+                  className={`py-2 rounded-lg font-bold text-xs uppercase transition-all ${
+                    selectedStream === stream
+                      ? "bg-white text-blue-900 shadow-md"
+                      : "text-white hover:bg-white/10"
+                  }`}
+                >
+                  {stream === "both" ? "Both" : `Stream ${stream}`}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <button
             onClick={startSession}
             disabled={isStarting}
@@ -427,9 +452,14 @@ function StartSessionContent() {
             </div>
 
             <div className="flex w-full justify-between items-center mb-6 mt-2">
-              <div className="flex items-center gap-2 text-white font-bold bg-white/20 px-3.5 py-1.5 rounded-full text-xs border border-white/10">
-                <span className="w-2.5 h-2.5 rounded-full bg-red-400 animate-pulse" />
-                Live Session
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 text-white font-bold bg-white/20 px-3.5 py-1.5 rounded-full text-xs border border-white/10">
+                  <span className="w-2.5 h-2.5 rounded-full bg-red-400 animate-pulse" />
+                  Live Session
+                </div>
+                <div className="px-3 py-1.5 rounded-full bg-white/10 border border-white/10 text-xs font-bold text-blue-200">
+                  Stream: <span className="uppercase">{activeSession.targetStream ?? "both"}</span>
+                </div>
               </div>
               <div className="text-sm font-bold text-blue-100 flex items-center gap-1.5 bg-white/5 border border-white/10 px-3 py-1 rounded-full">
                 <RefreshCw
