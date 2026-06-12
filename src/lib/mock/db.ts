@@ -36,6 +36,7 @@ export interface AttendanceSession {
   };
   status: 'active' | 'closed';
   targetStream?: 'A' | 'B' | 'both';
+  verificationMode?: 'pin_only' | 'pin_and_qr';
 }
 
 export interface AttendanceRecord {
@@ -48,7 +49,7 @@ export interface AttendanceRecord {
     lng: number;
   };
   status: 'present' | 'absent' | 'late';
-  method: 'qr' | 'manual'; // Track if it was scanned or manually overridden
+  method: 'qr' | 'manual' | 'pin'; // Track if it was scanned, manually overridden, or via PIN only
 }
 
 // MOCK DATA

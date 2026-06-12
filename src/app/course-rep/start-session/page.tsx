@@ -59,6 +59,7 @@ function StartSessionContent() {
   const [isManualModalOpen, setIsManualModalOpen] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
   const [selectedStream, setSelectedStream] = useState<'A' | 'B' | 'both'>('both');
+  const [verificationMode, setVerificationMode] = useState<'pin_only' | 'pin_and_qr'>('pin_and_qr');
   const [isLoadingCourses, setIsLoadingCourses] = useState(true);
   const [allStudents, setAllStudents] = useState<StudentInfo[]>([]);
   const [studentNameMap, setStudentNameMap] = useState<Record<string, string>>({});
@@ -140,6 +141,7 @@ function StartSessionContent() {
         location: { lat, lng },
         status: "active",
         targetStream: selectedStream,
+        verificationMode: verificationMode,
       };
 
       try {
@@ -414,6 +416,38 @@ function StartSessionContent() {
             </div>
           </div>
 
+          {/* Verification Mode Selector */}
+          <div className="mb-8 max-w-xs mx-auto">
+            <label className="block text-sm font-bold text-blue-100 mb-3">
+              Verification Mode
+            </label>
+            <div className="grid grid-cols-2 gap-2 bg-white/5 p-1 rounded-xl border border-white/10">
+              <button
+                type="button"
+                onClick={() => setVerificationMode("pin_and_qr")}
+                className={`py-2 rounded-lg font-bold text-xs transition-all ${
+                  verificationMode === "pin_and_qr"
+                    ? "bg-white text-blue-900 shadow-md"
+                    : "text-white hover:bg-white/10"
+                }`}
+              >
+                PIN &amp; QR Code
+              </button>
+              <button
+                type="button"
+                onClick={() => setVerificationMode("pin_only")}
+                className={`py-2 rounded-lg font-bold text-xs transition-all ${
+                  verificationMode === "pin_only"
+                    ? "bg-white text-blue-900 shadow-md"
+                    : "text-white hover:bg-white/10"
+                }`}
+                title="Use if class doesn't have a projector"
+              >
+                PIN Only
+              </button>
+            </div>
+          </div>
+
           <button
             onClick={startSession}
             disabled={isStarting}
@@ -451,14 +485,17 @@ function StartSessionContent() {
               />
             </div>
 
-            <div className="flex w-full justify-between items-center mb-6 mt-2">
-              <div className="flex items-center gap-2">
+            <div className="flex w-full justify-between items-center mb-6 mt-2 flex-wrap gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <div className="flex items-center gap-2 text-white font-bold bg-white/20 px-3.5 py-1.5 rounded-full text-xs border border-white/10">
                   <span className="w-2.5 h-2.5 rounded-full bg-red-400 animate-pulse" />
                   Live Session
                 </div>
                 <div className="px-3 py-1.5 rounded-full bg-white/10 border border-white/10 text-xs font-bold text-blue-200">
                   Stream: <span className="uppercase">{activeSession.targetStream ?? "both"}</span>
+                </div>
+                <div className="px-3 py-1.5 rounded-full bg-white/10 border border-white/10 text-xs font-bold text-blue-200">
+                  {activeSession.verificationMode === "pin_only" ? "PIN Only" : "PIN + QR"}
                 </div>
               </div>
               <div className="text-sm font-bold text-blue-100 flex items-center gap-1.5 bg-white/5 border border-white/10 px-3 py-1 rounded-full">
@@ -544,7 +581,7 @@ function StartSessionContent() {
                         {getStudentDisplay(r.studentId)}
                       </span>
                       <span className="ml-auto text-xs text-blue-200 font-bold bg-white/10 px-2 py-0.5 rounded border border-white/10 shrink-0">
-                        {r.method === "manual" ? "Manual" : "QR"}
+                        {r.method === "manual" ? "Manual" : r.method === "pin" ? "PIN" : "QR"}
                       </span>
                     </div>
                   ))}

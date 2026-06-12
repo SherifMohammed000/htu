@@ -93,6 +93,34 @@ export default function StudentScan() {
           }
         }
 
+        if (session.verificationMode === "pin_only") {
+          setStatus("submitting");
+          await recordAttendance({
+            studentId: user.id,
+            sessionId: session.id,
+            timestamp: new Date().toISOString(),
+            gpsCoordinates: { lat, lng },
+            status: "present",
+            method: "pin",
+          });
+
+          // Notify student that check-in was successful
+          fetch("/api/notifications", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              type: "checkin_success",
+              studentId: user.id,
+              courseId: session.courseId,
+            }),
+          }).catch((err) => console.error("Error triggering check-in success notification:", err));
+
+          setStatus("success");
+          return;
+        }
+
         // PIN valid + within radius → go to scanning QR code
         setVerifiedSession(session);
         setStudentCoords({ lat, lng });

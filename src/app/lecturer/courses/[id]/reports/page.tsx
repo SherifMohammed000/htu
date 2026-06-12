@@ -97,7 +97,7 @@ export default function CourseReports({ params }: { params: Promise<{ id: string
       name: studentNameMap[r.studentId] || r.studentId,
       indexNumber: allStudents.find((s) => s.id === r.studentId)?.indexNumber ||
                    allStudents.find((s) => s.id === r.studentId)?.studentId || "-",
-      method: r.method === "manual" ? "Manual" : "QR Scan",
+      method: r.method === "manual" ? "Manual" : r.method === "pin" ? "PIN Entry" : "QR Scan",
       time: new Date(r.timestamp).toLocaleTimeString(),
       status: "Present",
     }));
@@ -305,7 +305,7 @@ export default function CourseReports({ params }: { params: Promise<{ id: string
                           </div>
                           <div className="flex items-center gap-2 shrink-0">
                             <span className="text-[10px] text-blue-200 font-bold bg-white/10 px-2 py-0.5 rounded border border-white/10 uppercase">
-                              {r.method === "manual" ? "Manual" : "QR"}
+                              {r.method === "manual" ? "Manual" : r.method === "pin" ? "PIN" : "QR"}
                             </span>
                             <button
                               onClick={() => handleRemovePastAttendance(session.id, r.id)}
