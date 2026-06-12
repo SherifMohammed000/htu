@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { recordAttendance } from "@/lib/firebase/firestore";
-import { collection, query, where, getDocs } from "firebase/firestore";
+import { collection, query, where, getDocs, doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
 import { AttendanceSession } from "@/lib/mock/db";
 import { MapPin, CheckCircle, AlertTriangle, ArrowRight, QrCode, ShieldCheck, Scan } from "lucide-react";
@@ -62,15 +62,27 @@ export default function StudentScan() {
         // Stream validation check
         const sessionTarget = session.targetStream || "both";
         if (sessionTarget !== "both") {
-          const studentStream = user?.stream || "";
-          
-          const cleanStudentStream = studentStream.replace(/stream/i, "").trim().toUpperCase();
+          const studentIndexNumber = (user?.indexNumber || user?.email?.split("@")[0] || "").replace(/\s+/g, "");
+          let officialStream = "";
+
+          if (studentIndexNumber) {
+            try {
+              const studentDoc = await getDoc(doc(db, "students", studentIndexNumber));
+              if (studentDoc.exists()) {
+                officialStream = studentDoc.data().stream || "";
+              }
+            } catch (e) {
+              console.error("Failed to query official student stream on scan:", e);
+            }
+          }
+
+          const cleanStudentStream = officialStream.replace(/stream/i, "").trim().toUpperCase();
           const cleanTargetStream = sessionTarget.replace(/stream/i, "").trim().toUpperCase();
 
           if (cleanStudentStream !== cleanTargetStream) {
             setStatus("error");
             setErrorMessage(
-              `This session is only open to Stream ${cleanTargetStream}. Your profile is registered under Stream ${cleanStudentStream || "Unknown"}.`
+              `This session is only open to Stream ${cleanTargetStream}. Your index number ${studentIndexNumber} is assigned to Stream ${cleanStudentStream || "Unknown"}.`
             );
             return;
           }

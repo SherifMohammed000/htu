@@ -43,10 +43,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
             if (finalUser.role === 'student' && !finalUser.stream && finalUser.indexNumber) {
               try {
-                const studentQuery = query(collection(db, "students"), where("indexNumber", "==", finalUser.indexNumber));
-                const studentSnap = await getDocs(studentQuery);
-                if (!studentSnap.empty) {
-                  const resolvedStream = studentSnap.docs[0].data().stream || "";
+                const cleanIndex = finalUser.indexNumber.replace(/\s+/g, "");
+                const studentDoc = await getDoc(doc(db, 'students', cleanIndex));
+                if (studentDoc.exists()) {
+                  const resolvedStream = studentDoc.data().stream || "";
                   if (resolvedStream) {
                     await updateDoc(doc(db, 'users', fbUser.uid), { stream: resolvedStream });
                     finalUser.stream = resolvedStream;
@@ -122,10 +122,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             if (isStudent && indexNumber) {
               (async () => {
                 try {
-                  const studentQuery = query(collection(db, "students"), where("indexNumber", "==", indexNumber));
-                  const studentSnap = await getDocs(studentQuery);
-                  if (!studentSnap.empty) {
-                    const studentData = studentSnap.docs[0].data();
+                  const cleanIndex = indexNumber.replace(/\s+/g, "");
+                  const studentDoc = await getDoc(doc(db, 'students', cleanIndex));
+                  if (studentDoc.exists()) {
+                    const studentData = studentDoc.data();
                     resolvedName = studentData.name || resolvedName;
                     stream = studentData.stream || "";
                   }
@@ -198,19 +198,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const registerStudent = async (indexNumber: string, fullName: string, password: string, ipAddress: string) => {
     setIsLoading(true);
     try {
-      const email = `${indexNumber}@student.htu.edu`;
+      const cleanIndex = indexNumber.replace(/\s+/g, "");
+      const email = `${cleanIndex}@student.htu.edu`;
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       
       const reps = ["0324080539", "0324080114"];
-      const role = reps.includes(indexNumber.replace(/\s+/g, "")) ? "course_rep" : "student";
+      const role = reps.includes(cleanIndex) ? "course_rep" : "student";
 
       // Fetch stream from students collection
       let stream = "";
       try {
-        const studentQuery = query(collection(db, "students"), where("indexNumber", "==", indexNumber));
-        const studentSnap = await getDocs(studentQuery);
-        if (!studentSnap.empty) {
-          stream = studentSnap.docs[0].data().stream || "";
+        const studentDoc = await getDoc(doc(db, "students", cleanIndex));
+        if (studentDoc.exists()) {
+          stream = studentDoc.data().stream || "";
         }
       } catch (e) {
         console.error("Failed to fetch stream during registration:", e);
@@ -219,7 +219,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Create user profile in Firestore
       await setDoc(doc(db, 'users', userCredential.user.uid), {
         id: userCredential.user.uid,
-        indexNumber,
+        indexNumber: cleanIndex,
         fullName,
         email,
         role: role,

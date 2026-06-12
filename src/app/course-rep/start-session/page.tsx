@@ -29,7 +29,7 @@ import Link from "next/link";
 import { QRCodeSVG as QRCode } from "qrcode.react";
 import LocationMap from "@/components/LocationMap";
 import { useSearchParams } from "next/navigation";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
 
 interface StudentInfo {
@@ -37,6 +37,7 @@ interface StudentInfo {
   fullName: string;
   indexNumber?: string;
   studentId?: string;
+  stream?: string;
 }
 
 function StartSessionContent() {
@@ -92,6 +93,7 @@ function StartSessionContent() {
           fullName: s.fullName,
           indexNumber: (s as any).indexNumber,
           studentId: s.studentId,
+          stream: (s as any).stream || "",
         }));
         setAllStudents(combined);
 
@@ -255,6 +257,34 @@ function StartSessionContent() {
   // Manual sign-in
   const manualSignIn = async (studentId: string) => {
     if (!sessionId || !activeSession) return;
+
+    // Check stream matching
+    const sessionTarget = activeSession.targetStream || "both";
+    if (sessionTarget !== "both") {
+      const student = allStudents.find((s) => s.id === studentId);
+      const studentIndexNumber = (student?.indexNumber || student?.studentId || "").replace(/\s+/g, "");
+      let officialStream = student?.stream || "";
+
+      if (studentIndexNumber) {
+        try {
+          const studentDoc = await getDoc(doc(db, "students", studentIndexNumber));
+          if (studentDoc.exists()) {
+            officialStream = studentDoc.data().stream || "";
+          }
+        } catch (e) {
+          console.error("Failed to query official student stream for manual sign-in:", e);
+        }
+      }
+
+      const cleanStudentStream = officialStream.replace(/stream/i, "").trim().toUpperCase();
+      const cleanTargetStream = sessionTarget.replace(/stream/i, "").trim().toUpperCase();
+
+      if (cleanStudentStream && cleanStudentStream !== cleanTargetStream) {
+        alert(`Cannot sign in student. This session is only open to Stream ${cleanTargetStream}. Student is assigned to Stream ${cleanStudentStream}.`);
+        return;
+      }
+    }
+
     try {
       await recordAttendance({
         studentId,
@@ -306,6 +336,16 @@ function StartSessionContent() {
   const presentStudentIds = new Set(attendanceRecords.map((r) => r.studentId));
   const filteredStudents = allStudents.filter((s) => {
     if (presentStudentIds.has(s.id)) return false;
+
+    // Stream validation check for manual sign-in
+    const sessionTarget = activeSession?.targetStream || "both";
+    if (sessionTarget !== "both") {
+      const studentStream = (s.stream || "").replace(/stream/i, "").trim().toUpperCase();
+      const targetStream = sessionTarget.replace(/stream/i, "").trim().toUpperCase();
+      if (studentStream && studentStream !== targetStream) {
+        return false;
+      }
+    }
     
     const searchClean = manualSearch.replace(/\s+/g, "").toLowerCase();
     if (!searchClean) return true;
