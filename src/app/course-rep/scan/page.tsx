@@ -92,10 +92,10 @@ export default function CourseRepScan() {
             return;
           }
           const distance = haversineDistance(session.location.lat, session.location.lng, lat, lng);
-          if (distance > 30) {
+          if (distance > 500) {
             setStatus("error");
             setErrorMessage(
-              `You are ${Math.round(distance)}m away. You must be within 30m of the classroom.`
+              `You are ${Math.round(distance)}m away. You must be within 500m of the classroom.`
             );
             return;
           }

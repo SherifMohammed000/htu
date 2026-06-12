@@ -431,7 +431,7 @@ function StartSessionContent() {
           </h2>
           <p className="text-blue-100 mb-8 max-w-md mx-auto leading-relaxed">
             Your GPS location will be locked as the classroom reference point. Students must be
-            within 30 meters to check in.
+            within 500 meters to check in.
           </p>
           {/* Stream Selector */}
           <div className="mb-8 max-w-xs mx-auto">

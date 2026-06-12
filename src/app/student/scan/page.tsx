@@ -96,10 +96,10 @@ export default function StudentScan() {
             return;
           }
           const distance = haversineDistance(session.location.lat, session.location.lng, lat, lng);
-          if (distance > 30) {
+          if (distance > 500) {
             setStatus("error");
             setErrorMessage(
-              `You are ${Math.round(distance)}m away. You must be within 30m of the classroom to check in.`
+              `You are ${Math.round(distance)}m away. You must be within 500m of the classroom to check in.`
             );
             return;
           }
@@ -361,7 +361,7 @@ export default function StudentScan() {
               <MapPin className="w-5 h-5 text-blue-200 shrink-0 mt-0.5" />
               <div>
                 <p className="text-sm font-bold text-white">Location Required</p>
-                <p className="text-xs text-blue-200 mt-0.5">You must be within 30m of the classroom. After PIN verification, you'll scan the QR code on screen.</p>
+                <p className="text-xs text-blue-200 mt-0.5">You must be within 500m of the classroom. After PIN verification, you'll scan the QR code on screen.</p>
               </div>
             </div>
 

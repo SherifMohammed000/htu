@@ -193,7 +193,7 @@ export default function StudentDashboard() {
           </h3>
           <p className="text-blue-100 text-sm mt-1 leading-relaxed">
             When checking in, your browser will request your GPS location to verify you are physically
-            in the classroom within a 30-meter radius.
+            in the classroom within a 500-meter radius.
           </p>
         </div>
       </div>
