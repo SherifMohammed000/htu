@@ -57,6 +57,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               }
             }
 
+            // Acknowledge reps' index numbers and promote/demote accordingly
+            const reps = ["0324080539", "0324080114"];
+            const cleanIndex = (finalUser.indexNumber || "").replace(/\s+/g, "");
+            if (cleanIndex) {
+              if (reps.includes(cleanIndex)) {
+                if (finalUser.role !== "course_rep") {
+                  try {
+                    await updateDoc(doc(db, 'users', fbUser.uid), { role: "course_rep" });
+                    finalUser.role = "course_rep";
+                  } catch (e) {
+                    console.error("Failed to promote to course_rep on load:", e);
+                  }
+                }
+              } else {
+                if (finalUser.role === "course_rep") {
+                  try {
+                    await updateDoc(doc(db, 'users', fbUser.uid), { role: "student" });
+                    finalUser.role = "student";
+                  } catch (e) {
+                    console.error("Failed to demote to student on load:", e);
+                  }
+                }
+              }
+            }
+
             setUser(finalUser);
           } else {
             // Fallback: build a basic user from Firebase Auth data

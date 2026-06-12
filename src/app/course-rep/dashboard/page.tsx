@@ -66,7 +66,7 @@ export default function CourseRepDashboard() {
         <div>
           <div className="flex items-center gap-3 mb-1">
             <h1 className="text-3xl font-extrabold tracking-tight text-white drop-shadow-md">
-              Hello, {user?.fullName?.split(" ")[0]}! 👋
+              Hello, {user?.fullName}! 👋
             </h1>
             <span className="px-3 py-1 text-xs font-bold rounded-full bg-white/20 text-white border border-white/20 uppercase tracking-wider">
               Course Rep
